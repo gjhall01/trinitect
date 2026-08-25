@@ -17,12 +17,21 @@ export type Plan = {
   actions: Action[];
 };
 
+export type SmsPreferences = {
+  loginConfirmation: boolean;
+  dailyReminders: boolean;
+  milestoneNotifications: boolean;
+};
+
 export type UserProfile = {
   name: string;
   values: string[];
   primaryGoal: string;
   energyLevel: number; // 1–5
   onboarded: boolean;
+  phone?: string;
+  smsPreferences?: SmsPreferences;
+  phoneSkipped?: boolean; // user dismissed the save-progress modal
 };
 
 export type StageGoal = {

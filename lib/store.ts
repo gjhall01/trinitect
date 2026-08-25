@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState, DomainScores, Plan, UserProfile } from './types';
+import type { AppState, DomainScores, Plan, SmsPreferences, UserProfile } from './types';
 
 const KEY = 'trinitect_state';
 
@@ -50,6 +50,16 @@ export function updateProfile(profile: UserProfile): void {
 export function updatePlan(plan: Plan): void {
   const state = loadState();
   saveState({ ...state, todaysPlan: plan });
+}
+
+export function savePhoneNumber(phone: string, smsPreferences: SmsPreferences): void {
+  const state = loadState();
+  saveState({ ...state, profile: { ...state.profile, phone, smsPreferences, phoneSkipped: false } });
+}
+
+export function skipPhoneCollection(): void {
+  const state = loadState();
+  saveState({ ...state, profile: { ...state.profile, phoneSkipped: true } });
 }
 
 export function completedAction(actionId: string): void {

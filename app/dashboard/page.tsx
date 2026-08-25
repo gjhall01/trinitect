@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import DomainRings from '@/components/DomainRings';
 import ActionCard from '@/components/ActionCard';
+import SaveProgressModal from '@/components/SaveProgressModal';
 import { loadState, completedAction, updatePlan } from '@/lib/store';
 import { generateDailyPlan } from '@/lib/mock-ai';
 import type { AppState } from '@/lib/types';
@@ -39,10 +40,19 @@ function formatDate() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
+function shouldShowSavePrompt(s: AppState): boolean {
+  if (s.profile.phone) return false;          // already saved
+  if (s.profile.phoneSkipped) return false;   // user dismissed it
+  const completedCount = s.todaysPlan?.actions.filter(a => a.completed).length ?? 0;
+  return completedCount >= 1;                 // show after first completion
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [state, setState] = useState<AppState | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
 
   useEffect(() => {
     const s = loadState();
@@ -50,7 +60,6 @@ export default function Dashboard() {
       router.replace('/');
       return;
     }
-    // Generate today's plan if missing or stale
     const today = new Date().toISOString().split('T')[0];
     if (!s.todaysPlan || s.todaysPlan.date !== today) {
       const plan = generateDailyPlan(s.profile, s.domainScores);
@@ -64,6 +73,23 @@ export default function Dashboard() {
 
   const handleComplete = useCallback((actionId: string) => {
     completedAction(actionId);
+    const updated = loadState();
+    setState(updated);
+    // Show save modal after short delay so the completion animation plays first
+    if (shouldShowSavePrompt(updated)) {
+      setTimeout(() => setShowSaveModal(true), 700);
+    }
+  }, []);
+
+  const handleSaved = useCallback(() => {
+    setShowSaveModal(false);
+    setState(loadState());
+    setShowSavedConfirmation(true);
+    setTimeout(() => setShowSavedConfirmation(false), 3000);
+  }, []);
+
+  const handleSkip = useCallback(() => {
+    setShowSaveModal(false);
     setState(loadState());
   }, []);
 
@@ -124,6 +150,25 @@ export default function Dashboard() {
           <h1 className="page-greeting">{greeting()}{profile.name ? `, ${profile.name}` : '.'}</h1>
           <p className="page-date">{formatDate()}</p>
         </div>
+
+        {/* Saved confirmation toast */}
+        {showSavedConfirmation && (
+          <div style={{
+            position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+            background: 'var(--surface)',
+            border: '1px solid rgba(168,255,62,0.3)',
+            borderRadius: 40,
+            padding: '10px 20px',
+            display: 'flex', alignItems: 'center', gap: 10,
+            zIndex: 600,
+            animation: 'fadeUp 0.3s ease both',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{ color: 'var(--physical)', fontSize: 15 }}>✓</span>
+            <span style={{ fontSize: 13, color: 'var(--text1)', fontWeight: 500 }}>Progress saved</span>
+          </div>
+        )}
 
         <div className="dashboard-grid">
           <div className="dashboard-left">
@@ -220,6 +265,21 @@ export default function Dashboard() {
               ))}
             </div>
 
+            {/* Phone saved indicator */}
+            {profile.phone && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                background: 'var(--accent-dim)',
+                border: '1px solid rgba(168,255,62,0.15)',
+              }}>
+                <span style={{ color: 'var(--physical)', fontSize: 13 }}>✓</span>
+                <span style={{ fontSize: 12, color: 'var(--text2)' }}>
+                  Progress saved · {profile.phone.replace('+1', '').replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}
+                </span>
+              </div>
+            )}
+
           </div>
         </div>
       </main>
@@ -239,6 +299,11 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Save progress modal */}
+      {showSaveModal && (
+        <SaveProgressModal onSaved={handleSaved} onSkip={handleSkip} />
+      )}
     </div>
   );
 }
