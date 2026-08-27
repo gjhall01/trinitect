@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState, DomainScores, Plan, SmsPreferences, UserProfile } from './types';
+import type { AppState, DailyPlan, DomainScores, SmsPreferences, UserProfile } from './types';
 
 const KEY = 'trinitect_state';
 
@@ -17,6 +17,7 @@ const defaultState: AppState = {
   streak: 0,
   longestStreak: 0,
   lastActiveDate: null,
+  subscriptionPlan: 'free',
   currentGoal: {
     id: 'phase0-foundation',
     title: '21-Day Foundation',
@@ -47,7 +48,7 @@ export function updateProfile(profile: UserProfile): void {
   saveState({ ...state, profile });
 }
 
-export function updatePlan(plan: Plan): void {
+export function updatePlan(plan: DailyPlan): void {
   const state = loadState();
   saveState({ ...state, todaysPlan: plan });
 }
@@ -70,7 +71,6 @@ export function completedAction(actionId: string): void {
   );
   const updatedPlan = { ...state.todaysPlan, actions };
 
-  // Update domain scores when all actions for a domain are complete
   const updatedScores: DomainScores = { ...state.domainScores };
   const domains = ['physical', 'mental', 'spiritual', 'metaphysical'] as const;
   for (const domain of domains) {
@@ -80,7 +80,6 @@ export function completedAction(actionId: string): void {
     }
   }
 
-  // Streak logic
   const today = new Date().toISOString().split('T')[0];
   const allDone = actions.every(a => a.completed);
   let streak = state.streak;

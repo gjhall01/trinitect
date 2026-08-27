@@ -12,7 +12,7 @@ export type Action = {
   completed: boolean;
 };
 
-export type Plan = {
+export type DailyPlan = {
   date: string; // YYYY-MM-DD
   actions: Action[];
 };
@@ -42,12 +42,15 @@ export type StageGoal = {
   completedDays: number;
 };
 
+export type SubscriptionPlan = 'free' | 'pro';
+
 export type AppState = {
   profile: UserProfile;
   domainScores: DomainScores;
-  todaysPlan: Plan | null;
+  todaysPlan: DailyPlan | null;
   streak: number;
   longestStreak: number;
   lastActiveDate: string | null;
   currentGoal: StageGoal;
+  subscriptionPlan: SubscriptionPlan;
 };

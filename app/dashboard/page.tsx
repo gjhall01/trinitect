@@ -102,7 +102,8 @@ export default function Dashboard() {
     );
   }
 
-  const { domainScores, todaysPlan, streak, longestStreak, currentGoal, profile } = state;
+  const { domainScores, todaysPlan, streak, longestStreak, currentGoal, profile, subscriptionPlan } = state;
+  const isPro = subscriptionPlan === 'pro';
   const nextAction = todaysPlan?.actions.find(a => !a.completed);
   const completedCount = todaysPlan?.actions.filter(a => a.completed).length ?? 0;
   const totalCount = todaysPlan?.actions.length ?? 0;
@@ -138,9 +139,29 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="streak-chip">
-          <span className="streak-num">{streak}</span>
-          <span className="streak-label">day streak</span>
+        <div style={{ padding: '0 16px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Plan badge */}
+          <div
+            onClick={() => router.push(isPro ? '#' : '/pricing')}
+            style={{
+              background: isPro ? 'rgba(168,255,62,0.08)' : 'rgba(212,160,255,0.08)',
+              border: `1px solid ${isPro ? 'rgba(168,255,62,0.2)' : 'rgba(212,160,255,0.2)'}`,
+              borderRadius: 10, padding: '10px 14px',
+              cursor: isPro ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: isPro ? 'var(--physical)' : 'var(--spiritual)' }}>
+              {isPro ? '✦ Pro' : '○ Free'}
+            </span>
+            {!isPro && <span style={{ fontSize: 10, color: 'var(--spiritual)', fontFamily: 'var(--font-mono)' }}>Upgrade →</span>}
+          </div>
+
+          {/* Streak */}
+          <div className="streak-chip" style={{ margin: 0 }}>
+            <span className="streak-num">{streak}</span>
+            <span className="streak-label">day streak</span>
+          </div>
         </div>
       </nav>
 
@@ -182,6 +203,35 @@ export default function Dashboard() {
                   <div className="next-action-text">{nextAction.title}</div>
                 </div>
                 <span className="next-action-arrow">→</span>
+              </div>
+            )}
+
+            {/* Pro upgrade banner — free users only */}
+            {!isPro && (
+              <div
+                onClick={() => router.push('/pricing')}
+                className="fade-up fade-up-d2"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(212,160,255,0.08) 0%, rgba(56,217,245,0.06) 100%)',
+                  border: '1px solid rgba(212,160,255,0.25)',
+                  borderRadius: 'var(--radius)',
+                  padding: '14px 18px',
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  cursor: 'pointer',
+                  transition: 'border-color var(--transition)',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--spiritual)', marginBottom: 2 }}>
+                    Unlock Pro
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text1)', fontWeight: 500 }}>
+                    Spiritual + Meta domains, AI plans, SMS reminders
+                  </div>
+                </div>
+                <div style={{ background: 'var(--spiritual)', color: 'var(--bg)', fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 20, fontFamily: 'var(--font-display)', whiteSpace: 'nowrap' }}>
+                  $8.99/mo →
+                </div>
               </div>
             )}
 

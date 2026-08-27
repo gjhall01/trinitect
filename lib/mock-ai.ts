@@ -1,4 +1,4 @@
-import type { Action, DomainScores, Plan, UserProfile } from './types';
+import type { Action, DailyPlan, DomainScores, UserProfile } from './types';
 
 const physicalActions: Omit<Action, 'id' | 'completed'>[] = [
   { domain: 'physical', title: '10-min zone 2 walk', duration: 10, description: 'Brisk outdoor walk, conversational pace.', benefit: 'Mitochondrial density, cortisol regulation' },
@@ -44,7 +44,7 @@ function withId(action: Omit<Action, 'id' | 'completed'>): Action {
   return { ...action, id: Math.random().toString(36).slice(2), completed: false };
 }
 
-export function generateDailyPlan(profile: UserProfile, scores: DomainScores): Plan {
+export function generateDailyPlan(profile: UserProfile, scores: DomainScores): DailyPlan {
   // Prioritize lower-scoring domains but always include all 4
   const today = new Date().toISOString().split('T')[0];
 
