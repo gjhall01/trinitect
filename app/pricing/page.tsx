@@ -29,14 +29,15 @@ export default function Pricing() {
   const [loading, setLoading] = useState(false);
 
   async function handleUpgrade() {
-    const token = getToken();
-    if (!token) { router.push('/'); return; }
-
     setLoading(true);
     try {
+      const token = getToken();
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ interval }),
       });
       const { url, error } = await res.json();

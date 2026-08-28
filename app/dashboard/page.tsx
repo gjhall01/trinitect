@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
+  const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
 
   useEffect(() => {
     const s = loadState();
@@ -69,6 +70,16 @@ export default function Dashboard() {
       setState(s);
     }
     setMounted(true);
+
+    // Show upgrade success toast if returning from Stripe
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('upgraded') === '1') {
+        setShowUpgradeSuccess(true);
+        setTimeout(() => setShowUpgradeSuccess(false), 6000);
+        window.history.replaceState({}, '', '/dashboard');
+      }
+    }
   }, [router]);
 
   const handleComplete = useCallback((actionId: string) => {
@@ -171,6 +182,28 @@ export default function Dashboard() {
           <h1 className="page-greeting">{greeting()}{profile.name ? `, ${profile.name}` : '.'}</h1>
           <p className="page-date">{formatDate()}</p>
         </div>
+
+        {/* Upgrade success toast */}
+        {showUpgradeSuccess && (
+          <div style={{
+            position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+            background: 'var(--surface)',
+            border: '1px solid rgba(168,255,62,0.4)',
+            borderRadius: 40,
+            padding: '12px 24px',
+            display: 'flex', alignItems: 'center', gap: 12,
+            zIndex: 600,
+            animation: 'fadeUp 0.3s ease both',
+            boxShadow: '0 8px 40px rgba(168,255,62,0.15)',
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{ fontSize: 18 }}>✦</span>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--physical)', fontWeight: 700, fontFamily: 'var(--font-display)' }}>Welcome to Trinitect Pro</div>
+              <div style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>All 4 domains + AI plans unlocked</div>
+            </div>
+          </div>
+        )}
 
         {/* Saved confirmation toast */}
         {showSavedConfirmation && (
