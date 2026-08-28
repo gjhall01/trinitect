@@ -6,7 +6,9 @@ export async function POST(req: Request) {
   try {
     const { interval } = await req.json() as { interval?: 'monthly' | 'annual' };
     const priceId = interval === 'annual' ? PRICES.annual : PRICES.monthly;
-    const origin = req.headers.get('origin') ?? 'https://trinitect.com';
+    // Always use HTTPS — Stripe live mode requires it for success/cancel URLs
+    const rawOrigin = req.headers.get('origin') ?? '';
+    const origin = rawOrigin.startsWith('https://') ? rawOrigin : 'https://trinitect.com';
 
     // Attach userId if the user is already authenticated — not required
     const token = getTokenFromRequest(req);
@@ -28,7 +30,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error('checkout error', err);
-    return NextResponse.json({ error: 'Failed to create checkout session.' }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Failed to create checkout session.';
+    console.error('checkout error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
