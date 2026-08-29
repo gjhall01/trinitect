@@ -151,7 +151,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
       />
 
       {/* Sheet */}
-      <div style={{
+      <div className="account-gate-sheet" style={{
         position: 'fixed',
         bottom: 0, left: 0, right: 0,
         zIndex: 501,
@@ -308,7 +308,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
               </div>
             </div>
 
-            <p style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.5, marginBottom: 16 }}>
+            <p style={{ fontSize: 10, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 16 }}>
               By continuing you agree to receive SMS messages per your selections above. Msg & data rates may apply. Reply STOP to unsubscribe.
             </p>
 
@@ -421,6 +421,10 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
         @keyframes gFadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        .account-gate-sheet input::placeholder {
+          color: #6b7089;
+          opacity: 1;
         }
       `}</style>
     </>
