@@ -205,7 +205,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
 
             {/* Name (optional) */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text2)', marginBottom: 6 }}>
                 First name (optional)
               </label>
               <input
@@ -230,13 +230,13 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
 
             {/* Phone */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text2)', marginBottom: 6 }}>
                 Mobile number (US)
               </label>
               <div style={{ position: 'relative' }}>
                 <span style={{
                   position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
-                  fontSize: 14, color: 'var(--text3)', fontFamily: 'var(--font-mono)', pointerEvents: 'none',
+                  fontSize: 14, color: 'var(--text2)', fontFamily: 'var(--font-mono)', pointerEvents: 'none',
                 }}>+1</span>
                 <input
                   type="tel"
@@ -269,7 +269,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
 
             {/* SMS opt-ins */}
             <div style={{ marginBottom: 14 }}>
-              <p style={{ fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 10 }}>
+              <p style={{ fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text2)', marginBottom: 10 }}>
                 SMS preferences
               </p>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -301,14 +301,14 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
                     </div>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text1)', lineHeight: 1.3 }}>{label}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2, lineHeight: 1.45 }}>{description}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2, lineHeight: 1.45 }}>{description}</div>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <p style={{ fontSize: 10, color: 'var(--text4)', lineHeight: 1.5, marginBottom: 16 }}>
+            <p style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.5, marginBottom: 16 }}>
               By continuing you agree to receive SMS messages per your selections above. Msg & data rates may apply. Reply STOP to unsubscribe.
             </p>
 
@@ -317,7 +317,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
               disabled={loading || !isValidPhone}
               style={{
                 width: '100%', padding: 15,
-                background: loading || !isValidPhone ? 'rgba(168,255,62,0.4)' : 'var(--physical)',
+                background: loading || !isValidPhone ? 'rgba(168,255,62,0.72)' : 'var(--physical)',
                 border: 'none', borderRadius: 'var(--radius)',
                 fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800,
                 color: 'var(--bg)', cursor: loading || !isValidPhone ? 'default' : 'pointer',
@@ -358,7 +358,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
                   style={{
                     flex: 1, height: 58,
                     background: 'var(--surface2)',
-                    border: `1.5px solid ${digit ? 'rgba(168,255,62,0.4)' : 'var(--border)'}`,
+                    border: `1.5px solid ${digit ? 'rgba(168,255,62,0.72)' : 'var(--border)'}`,
                     borderRadius: 'var(--radius-sm)',
                     textAlign: 'center',
                     fontSize: 24, fontFamily: 'var(--font-mono)', fontWeight: 700,
@@ -379,7 +379,7 @@ export default function AccountGateModal({ onAuthed, onClose }: Props) {
               disabled={loading || !isValidOTP}
               style={{
                 width: '100%', padding: 15, marginBottom: 14,
-                background: loading || !isValidOTP ? 'rgba(168,255,62,0.4)' : 'var(--physical)',
+                background: loading || !isValidOTP ? 'rgba(168,255,62,0.72)' : 'var(--physical)',
                 border: 'none', borderRadius: 'var(--radius)',
                 fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800,
                 color: 'var(--bg)', cursor: loading || !isValidOTP ? 'default' : 'pointer',
