@@ -247,7 +247,7 @@ export default function SaveProgressModal({ onSaved, onSkip }: Props) {
               </div>
             </div>
 
-            <p style={{ fontSize: 10, color: 'var(--text4)', lineHeight: 1.5, marginBottom: 20 }}>
+            <p style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.5, marginBottom: 20 }}>
               By continuing, you agree to receive SMS messages per your selections. Msg & data rates may apply. Reply STOP to unsubscribe.
             </p>
 

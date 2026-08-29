@@ -67,7 +67,7 @@ export default function DomainRings({ scores }: { scores: DomainScores }) {
           <text
             x={CX} y={CX + 12}
             textAnchor="middle"
-            fill="#4b4f62"
+            fill="#6b7089"
             fontFamily="'JetBrains Mono', monospace"
             fontSize="10"
             letterSpacing="2"

@@ -19,8 +19,8 @@
 
   --text1: #eeeaf5;
   --text2: #8b90a7;
-  --text3: #4b4f62;
-  --text4: #2f3347;
+  --text3: #6b7089;
+  --text4: #4b4f62;
 
   --font-display: 'Syne', sans-serif;
   --font-body: 'Outfit', sans-serif;
@@ -436,6 +436,7 @@ html, body {
   display: block;
 }
 .text-input::placeholder { color: var(--text3); }
+input::placeholder, textarea::placeholder { color: var(--text3); opacity: 1; }
 .text-input:focus { border-color: rgba(168,255,62,0.4); }
 
 .primary-btn {

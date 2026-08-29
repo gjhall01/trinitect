@@ -181,7 +181,7 @@ export default function Pricing() {
           </div>
         </div>
 
-        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
+        <p style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
           Secured by Stripe · Cancel anytime · No hidden fees
         </p>
       </div>
