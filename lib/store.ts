@@ -12,7 +12,7 @@ const defaultState: AppState = {
     energyLevel: 3,
     onboarded: false,
   },
-  domainScores: { physical: 40, mental: 35, spiritual: 25, metaphysical: 20 },
+  domainScores: { physical: 40, mental: 35, spiritual: 25 },
   todaysPlan: null,
   streak: 0,
   longestStreak: 0,
@@ -72,7 +72,7 @@ export function completedAction(actionId: string): void {
   const updatedPlan = { ...state.todaysPlan, actions };
 
   const updatedScores: DomainScores = { ...state.domainScores };
-  const domains = ['physical', 'mental', 'spiritual', 'metaphysical'] as const;
+  const domains = ['physical', 'mental', 'spiritual'] as const;
   for (const domain of domains) {
     const domainActions = actions.filter(a => a.domain === domain);
     if (domainActions.length > 0 && domainActions.every(a => a.completed)) {

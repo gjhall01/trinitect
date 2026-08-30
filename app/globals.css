@@ -253,7 +253,6 @@ html, body {
 .action-card[data-domain='physical']::before { background: var(--physical); }
 .action-card[data-domain='mental']::before { background: var(--mental); }
 .action-card[data-domain='spiritual']::before { background: var(--spiritual); }
-.action-card[data-domain='metaphysical']::before { background: var(--metaphysical); }
 .action-card:hover { border-color: var(--border-hover); }
 .action-card.completed { opacity: 0.4; }
 .action-card.completed .action-title { text-decoration: line-through; color: var(--text3); }
@@ -273,7 +272,6 @@ html, body {
 .action-tag[data-domain='physical'] { background: rgba(168,255,62,0.10); color: var(--physical); }
 .action-tag[data-domain='mental'] { background: rgba(56,217,245,0.10); color: var(--mental); }
 .action-tag[data-domain='spiritual'] { background: rgba(212,160,255,0.10); color: var(--spiritual); }
-.action-tag[data-domain='metaphysical'] { background: rgba(255,204,68,0.10); color: var(--metaphysical); }
 .action-duration { font-size: 10px; color: var(--text3); font-family: var(--font-mono); }
 .action-benefit { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.4; }
 

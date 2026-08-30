@@ -102,7 +102,7 @@ export async function findOrCreateUser(phone: string): Promise<string> {
           milestoneNotifications: true,
         },
       },
-      domainScores: { physical: 40, mental: 35, spiritual: 25, metaphysical: 20 },
+      domainScores: { physical: 40, mental: 35, spiritual: 25 },
       streak: 0,
       longestStreak: 0,
       lastActiveDate: null,

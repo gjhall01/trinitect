@@ -312,7 +312,7 @@ export default function Dashboard() {
                   <div className="stat-label">Done today</div>
                 </div>
                 <div className="stat-box">
-                  <div className="stat-num" style={{ color: 'var(--metaphysical)' }}>{totalCount - completedCount}</div>
+                  <div className="stat-num" style={{ color: 'var(--mental)' }}>{totalCount - completedCount}</div>
                   <div className="stat-label">Remaining</div>
                 </div>
               </div>

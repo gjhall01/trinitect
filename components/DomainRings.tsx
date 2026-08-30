@@ -3,10 +3,9 @@
 import type { DomainScores } from '@/lib/types';
 
 const DOMAINS = [
-  { key: 'physical', label: 'Physical', color: '#a8ff3e', r: 108 },
-  { key: 'mental', label: 'Mental', color: '#38d9f5', r: 84 },
-  { key: 'spiritual', label: 'Spiritual', color: '#d4a0ff', r: 60 },
-  { key: 'metaphysical', label: 'Meta', color: '#ffcc44', r: 36 },
+  { key: 'physical', label: 'Physical', color: '#a8ff3e', r: 100 },
+  { key: 'mental', label: 'Mental', color: '#38d9f5', r: 72 },
+  { key: 'spiritual', label: 'Spiritual', color: '#d4a0ff', r: 44 },
 ] as const;
 
 const STROKE = 14;
@@ -42,7 +41,7 @@ function Arc({ r, color, score }: { r: number; color: string; score: number }) {
 
 export default function DomainRings({ scores }: { scores: DomainScores }) {
   const overall = Math.round(
-    Object.values(scores).reduce((a, b) => a + b, 0) / 4
+    Object.values(scores).reduce((a, b) => a + b, 0) / 3
   );
 
   return (

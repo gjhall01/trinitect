@@ -18,7 +18,7 @@ export default function ActionCard({
         <div className="action-title">{action.title}</div>
         <div className="action-meta">
           <span className="action-tag" data-domain={action.domain}>
-            {action.domain === 'metaphysical' ? 'meta' : action.domain}
+            {action.domain}
           </span>
           <span className="action-duration">{action.duration} min</span>
         </div>

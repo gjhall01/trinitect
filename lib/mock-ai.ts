@@ -27,14 +27,6 @@ const spiritualActions: Omit<Action, 'id' | 'completed'>[] = [
   { domain: 'spiritual', title: 'Connection check-in', duration: 8, description: 'Reach out meaningfully to one person you care about.', benefit: 'Social nourishment, relational depth, belonging' },
 ];
 
-const metaphysicalActions: Omit<Action, 'id' | 'completed'>[] = [
-  { domain: 'metaphysical', title: 'Visualization — 5 min', duration: 5, description: 'Vivid, embodied vision of your 12-month future self.', benefit: 'Reticular activating system priming, motivation' },
-  { domain: 'metaphysical', title: 'Systems audit', duration: 10, description: 'One system in your life: is it serving you? One change.', benefit: 'Life architecture refinement, compounding leverage' },
-  { domain: 'metaphysical', title: 'Pattern scan', duration: 8, description: 'Look across the past week: what patterns are emerging?', benefit: 'Meta-awareness, proactive course correction' },
-  { domain: 'metaphysical', title: 'Intention setting', duration: 5, description: 'Three precise intentions for the day, written, not typed.', benefit: 'Prefrontal focus, subconscious activation' },
-  { domain: 'metaphysical', title: 'Beliefs inventory', duration: 10, description: 'Surface one limiting belief, reframe it as a growth edge.', benefit: 'Identity expansion, self-concept elevation' },
-  { domain: 'metaphysical', title: 'Legacy question', duration: 5, description: 'What would I want said about how I lived this decade?', benefit: 'Long-view alignment, daily action context' },
-];
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -45,15 +37,12 @@ function withId(action: Omit<Action, 'id' | 'completed'>): Action {
 }
 
 export function generateDailyPlan(profile: UserProfile, scores: DomainScores): DailyPlan {
-  // Prioritize lower-scoring domains but always include all 4
   const today = new Date().toISOString().split('T')[0];
 
-  // Pick one action per domain; weight toward weakest domain getting a shorter/easier action
   const actions: Action[] = [
     withId(pick(physicalActions)),
     withId(pick(mentalActions)),
     withId(pick(spiritualActions)),
-    withId(pick(metaphysicalActions)),
   ];
 
   // If user has a primary goal keyword, bias one action

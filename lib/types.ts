@@ -1,4 +1,4 @@
-export type Domain = 'physical' | 'mental' | 'spiritual' | 'metaphysical';
+export type Domain = 'physical' | 'mental' | 'spiritual';
 
 export type DomainScores = Record<Domain, number>; // 0–100
 

@@ -14,7 +14,7 @@ const FEATURES_FREE = [
 ];
 
 const FEATURES_PRO = [
-  'All 4 domains — physical, mental, spiritual, meta',
+  'All 3 domains — physical, mental, spiritual',
   'AI-personalized daily plans',
   'SMS daily reminders & milestone alerts',
   'Unlimited stage goals + bucket list',

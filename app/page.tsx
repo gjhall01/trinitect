@@ -76,7 +76,7 @@ export default function Onboarding() {
           <div className="fade-up">
             <h1 className="onboard-heading">Build a life<br />that compounds.</h1>
             <p className="onboard-sub">
-              Trinitect helps you replace low-leverage patterns with small, consistent actions across four domains — physical, mental, spiritual, and meta-physical — that generate real momentum over time.
+              Trinitect helps you replace low-leverage patterns with small, consistent actions across three domains — physical, mental, and spiritual — that generate real momentum over time.
             </p>
 
             <input
