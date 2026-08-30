@@ -117,6 +117,14 @@ const spiritualActions: Omit<Action, 'id' | 'completed'>[] = [
   },
 ];
 
+export function getAllPatterns() {
+  return {
+    physical: physicalActions,
+    mental: mentalActions,
+    spiritual: spiritualActions,
+  };
+}
+
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }

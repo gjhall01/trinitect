@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState, DailyPlan, DomainScores, SmsPreferences, UserProfile } from './types';
+import type { AppState, DailyPlan, DomainScores, Goal, SmsPreferences, UserProfile } from './types';
 
 const KEY = 'trinitect_state';
 
@@ -18,6 +18,7 @@ const defaultState: AppState = {
   longestStreak: 0,
   lastActiveDate: null,
   subscriptionPlan: 'free',
+  goals: [],
   currentGoal: {
     id: 'phase0-foundation',
     title: '21-Day Foundation',
@@ -61,6 +62,44 @@ export function savePhoneNumber(phone: string, smsPreferences: SmsPreferences): 
 export function skipPhoneCollection(): void {
   const state = loadState();
   saveState({ ...state, profile: { ...state.profile, phoneSkipped: true } });
+}
+
+export function addGoal(goalData: Omit<Goal, 'id' | 'createdAt'>): void {
+  const state = loadState();
+  const newGoal: Goal = {
+    ...goalData,
+    id: Math.random().toString(36).slice(2),
+    createdAt: new Date().toISOString().split('T')[0],
+  };
+  saveState({ ...state, goals: [...(state.goals || []), newGoal] });
+}
+
+export function updateGoal(goal: Goal): void {
+  const state = loadState();
+  const goals = (state.goals || []).map(g => g.id === goal.id ? goal : g);
+  saveState({ ...state, goals });
+}
+
+export function toggleMilestone(goalId: string, milestoneId: string): void {
+  const state = loadState();
+  const goals = (state.goals || []).map(g => {
+    if (g.id !== goalId) return g;
+    return {
+      ...g,
+      milestones: g.milestones.map(m =>
+        m.id === milestoneId ? { ...m, completed: !m.completed } : m
+      ),
+    };
+  });
+  saveState({ ...state, goals });
+}
+
+export function archiveGoal(goalId: string): void {
+  const state = loadState();
+  const goals = (state.goals || []).map(g =>
+    g.id === goalId ? { ...g, archived: true } : g
+  );
+  saveState({ ...state, goals });
 }
 
 export function completedAction(actionId: string): void {

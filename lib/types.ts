@@ -43,6 +43,26 @@ export type StageGoal = {
   completedDays: number;
 };
 
+export type GoalCategory = 'career' | 'physical' | 'spiritual' | 'relationships' | 'financial' | 'personal';
+
+export type GoalMilestone = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
+export type Goal = {
+  id: string;
+  category: GoalCategory;
+  title: string;
+  outcome: string;
+  targetDate: string; // YYYY-MM-DD
+  createdAt: string;  // YYYY-MM-DD
+  linkedDomains: Domain[];
+  milestones: GoalMilestone[];
+  archived: boolean;
+};
+
 export type SubscriptionPlan = 'free' | 'pro';
 
 export type AppState = {
@@ -54,4 +74,5 @@ export type AppState = {
   lastActiveDate: string | null;
   currentGoal: StageGoal;
   subscriptionPlan: SubscriptionPlan;
+  goals: Goal[];
 };
