@@ -74,9 +74,9 @@ export default function Onboarding() {
         {/* Step: Values */}
         {step === 'values' && (
           <div className="fade-up">
-            <h1 className="onboard-heading">Build a life<br />that compounds.</h1>
+            <h1 className="onboard-heading">What if it's not<br />you — it's the pattern?</h1>
             <p className="onboard-sub">
-              It's the pattern, not the person. Trinitect helps you identify and replace patterns that hold you back — and build ones that compound into the best version of you.
+              Most people change the wrong thing. Trinitect helps you find the patterns holding you back, replace them with ones that compound, and discover the difference in your own results.
             </p>
 
             <input
@@ -88,7 +88,7 @@ export default function Onboarding() {
             />
 
             <p style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
-              What matters most to you? Pick up to 6.
+              When you're off track — what pulls you back? Pick up to 6.
             </p>
             <div className="values-grid">
               {VALUES.map(v => (
@@ -115,9 +115,9 @@ export default function Onboarding() {
         {/* Step: Goal */}
         {step === 'goal' && (
           <div className="fade-up">
-            <h1 className="onboard-heading">What goal do<br />you want to own?</h1>
+            <h1 className="onboard-heading">90 days from now —<br />what's different?</h1>
             <p className="onboard-sub">
-              Personal or professional — your daily patterns will be built around this. You can refine it anytime.
+              Personal, professional, or both. Your patterns will be built around this. What would have to change for you to feel like you're winning?
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
@@ -175,9 +175,9 @@ export default function Onboarding() {
         {/* Step: Energy */}
         {step === 'energy' && (
           <div className="fade-up">
-            <h1 className="onboard-heading">How's your<br />energy today?</h1>
+            <h1 className="onboard-heading">Where are you<br />right now?</h1>
             <p className="onboard-sub">
-              Your first plan is calibrated to where you are right now, not where you want to be. Low-friction start, compounding from there.
+              Not where you want to be — where you actually are today. Your first patterns start here, not somewhere out of reach.
             </p>
 
             <div className="energy-scale">

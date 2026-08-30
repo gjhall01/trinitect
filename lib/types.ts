@@ -9,6 +9,7 @@ export type Action = {
   duration: number; // minutes
   description: string;
   benefit: string;
+  reflection?: string; // Socratic question — opt-in WHY discovery
   completed: boolean;
 };
 
