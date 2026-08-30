@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: 'Plan', icon: '◈', href: '/plan' },
   { label: 'Patterns', icon: '⟁', href: '/patterns' },
   { label: 'Goals', icon: '◎', href: '/goals' },
+  { label: 'Progress', icon: '⇧', href: '/progress' },
 ];
 
 function HomeIcon() {
@@ -25,11 +26,16 @@ function GoalIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
 }
 
+function ProgressIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
+}
+
 const MOBILE_NAV = [
   { label: 'Today', Icon: HomeIcon, href: '/dashboard' },
   { label: 'Plan', Icon: PlanIcon, href: '/plan' },
   { label: 'Patterns', Icon: PatternIcon, href: '/patterns' },
   { label: 'Goals', Icon: GoalIcon, href: '/goals' },
+  { label: 'Progress', Icon: ProgressIcon, href: '/progress' },
 ];
 
 export default function AppLayout({

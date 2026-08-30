@@ -43,6 +43,11 @@ export type StageGoal = {
   completedDays: number;
 };
 
+export type DayRecord = {
+  date: string;      // YYYY-MM-DD
+  domains: Domain[]; // which domains were fully completed that day
+};
+
 export type GoalCategory = 'career' | 'physical' | 'spiritual' | 'relationships' | 'financial' | 'personal';
 
 export type GoalMilestone = {
@@ -75,4 +80,5 @@ export type AppState = {
   currentGoal: StageGoal;
   subscriptionPlan: SubscriptionPlan;
   goals: Goal[];
+  history: DayRecord[]; // last 90 days of daily completions
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState, DailyPlan, DomainScores, Goal, SmsPreferences, UserProfile } from './types';
+import type { AppState, DailyPlan, Domain, DomainScores, Goal, SmsPreferences, UserProfile } from './types';
 
 const KEY = 'trinitect_state';
 
@@ -19,6 +19,7 @@ const defaultState: AppState = {
   lastActiveDate: null,
   subscriptionPlan: 'free',
   goals: [],
+  history: [],
   currentGoal: {
     id: 'phase0-foundation',
     title: '21-Day Foundation',
@@ -123,12 +124,26 @@ export function completedAction(actionId: string): void {
   const allDone = actions.every(a => a.completed);
   let streak = state.streak;
   let longestStreak = state.longestStreak;
+  let history = state.history || [];
+
   if (allDone && state.lastActiveDate !== today) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yStr = yesterday.toISOString().split('T')[0];
     streak = state.lastActiveDate === yStr ? streak + 1 : 1;
     longestStreak = Math.max(longestStreak, streak);
+
+    // Record completed domains for today
+    const completedDomains = [...new Set(actions.map(a => a.domain))] as Domain[];
+    history = [...history.filter(h => h.date !== today), { date: today, domains: completedDomains }].slice(-90);
+  } else if (!allDone) {
+    // Partial completion — record what's done so far (overwrite if exists)
+    const completedDomains = [...new Set(
+      actions.filter(a => a.completed).map(a => a.domain)
+    )] as Domain[];
+    if (completedDomains.length > 0) {
+      history = [...history.filter(h => h.date !== today), { date: today, domains: completedDomains }].slice(-90);
+    }
   }
 
   saveState({
@@ -138,6 +153,7 @@ export function completedAction(actionId: string): void {
     streak,
     longestStreak,
     lastActiveDate: allDone ? today : state.lastActiveDate,
+    history,
     currentGoal: {
       ...state.currentGoal,
       completedDays: allDone && state.lastActiveDate !== today
