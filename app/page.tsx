@@ -76,7 +76,7 @@ export default function Onboarding() {
           <div className="fade-up">
             <h1 className="onboard-heading">Build a life<br />that compounds.</h1>
             <p className="onboard-sub">
-              Trinitect helps you replace low-leverage patterns with small, consistent actions across three domains — physical, mental, and spiritual — that generate real momentum over time.
+              It's the pattern, not the person. Trinitect helps you identify and replace patterns that hold you back — and build ones that compound into the best version of you.
             </p>
 
             <input
@@ -115,9 +115,9 @@ export default function Onboarding() {
         {/* Step: Goal */}
         {step === 'goal' && (
           <div className="fade-up">
-            <h1 className="onboard-heading">What's your<br />primary focus?</h1>
+            <h1 className="onboard-heading">What goal do<br />you want to own?</h1>
             <p className="onboard-sub">
-              Your plan adapts to this. You can always refine it later — pick what resonates most right now.
+              Personal or professional — your daily patterns will be built around this. You can refine it anytime.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>

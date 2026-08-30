@@ -15,7 +15,7 @@ const FEATURES_FREE = [
 
 const FEATURES_PRO = [
   'All 3 domains — physical, mental, spiritual',
-  'AI-personalized daily plans',
+  'AI-personalized daily patterns',
   'SMS daily reminders & milestone alerts',
   'Unlimited stage goals + bucket list',
   'Pattern awareness engine',
@@ -86,7 +86,7 @@ export default function Pricing() {
             Build a life<br />that compounds.
           </h1>
           <p style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.65 }}>
-            Small, consistent actions across four domains generate momentum that unlocks the version of your life you actually want.
+            It's the pattern, not the person. Small, consistent patterns across three domains compound into the version of your life you actually want.
           </p>
         </div>
 

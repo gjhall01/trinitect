@@ -28,7 +28,7 @@ export default function ActionCard({
       <button
         className={`complete-btn ${action.completed ? 'done' : ''}`}
         onClick={() => !action.completed && onComplete(action.id)}
-        aria-label={action.completed ? 'Done' : 'Mark complete'}
+        aria-label={action.completed ? 'Pattern built' : 'Build this pattern'}
         title={action.completed ? 'Completed' : action.description}
       >
         {action.completed ? (

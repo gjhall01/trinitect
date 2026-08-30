@@ -200,7 +200,7 @@ export default function Dashboard() {
             <span style={{ fontSize: 18 }}>✦</span>
             <div>
               <div style={{ fontSize: 13, color: 'var(--physical)', fontWeight: 700, fontFamily: 'var(--font-display)' }}>Welcome to Trinitect Pro</div>
-              <div style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>All 4 domains + AI plans unlocked</div>
+              <div style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>All 3 domains + personalized patterns unlocked</div>
             </div>
           </div>
         )}
@@ -232,7 +232,7 @@ export default function Dashboard() {
               <div className="next-action-banner fade-up fade-up-d1" title={nextAction.description}>
                 <div className="next-action-pulse" />
                 <div style={{ flex: 1 }}>
-                  <div className="next-action-label">Next best action</div>
+                  <div className="next-action-label">Next pattern to build</div>
                   <div className="next-action-text">{nextAction.title}</div>
                 </div>
                 <span className="next-action-arrow">→</span>
@@ -259,7 +259,7 @@ export default function Dashboard() {
                     Unlock Pro
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text1)', fontWeight: 500 }}>
-                    Spiritual + Meta domains, AI plans, SMS reminders
+                    All 3 domains, AI-matched patterns, SMS reminders
                   </div>
                 </div>
                 <div style={{ background: 'var(--spiritual)', color: 'var(--bg)', fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 20, fontFamily: 'var(--font-display)', whiteSpace: 'nowrap' }}>
@@ -277,7 +277,7 @@ export default function Dashboard() {
             {/* Today's plan */}
             <div className="panel fade-up fade-up-d3">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-                <div className="panel-title" style={{ marginBottom: 0 }}>Today's Plan</div>
+                <div className="panel-title" style={{ marginBottom: 0 }}>Today's Patterns</div>
                 <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: completedCount === totalCount ? 'var(--physical)' : 'var(--text3)' }}>
                   {completedCount}/{totalCount} done
                 </span>
@@ -334,11 +334,14 @@ export default function Dashboard() {
 
             {/* Virtuous cycle */}
             <div className="panel fade-up fade-up-d4">
-              <div className="panel-title">Virtuous Cycle</div>
+              <div className="panel-title">Compounding Cycle</div>
+              <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginBottom: 14, lineHeight: 1.5 }}>
+                It's the pattern, not the person.
+              </p>
               {[
-                { from: 'Physical energy', to: 'Mental clarity' },
-                { from: 'Mental clarity', to: 'Spiritual alignment' },
-                { from: 'Spiritual alignment', to: 'Capacity to help others' },
+                { from: 'Daily patterns', to: 'Skills compound' },
+                { from: 'Skills compound', to: 'Goals accelerate' },
+                { from: 'Goals achieved', to: 'Better version of you' },
               ].map(({ from, to }) => (
                 <div key={from} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--text2)' }}>
                   <span style={{ flex: 1 }}>{from}</span>
