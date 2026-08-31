@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, DeleteCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { PinpointSMSVoiceV2Client, SendTextMessageCommand } from '@aws-sdk/client-pinpoint-sms-voice-v2';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
@@ -9,10 +9,8 @@ const USERS_TABLE = process.env.USERS_TABLE ?? 'trinitect-users';
 const OTP_TABLE = process.env.OTP_TABLE ?? 'trinitect-otp';
 const JWT_SECRET = process.env.JWT_SECRET ?? '';
 
-const ORIGINATION_NUMBER = process.env.ORIGINATION_NUMBER ?? '';
-
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
-const sms = new PinpointSMSVoiceV2Client({ region: REGION });
+const sns = new SNSClient({ region: REGION });
 
 // ── OTP ──────────────────────────────────────────────────────────────────────
 
@@ -34,11 +32,13 @@ export async function createAndSendOTP(phone: string): Promise<void> {
     Item: { phone, otpHash: hash, expiresAt, attempts: 0 },
   }));
 
-  await sms.send(new SendTextMessageCommand({
-    DestinationPhoneNumber: phone,
-    MessageBody: `Your Trinitect code is ${otp}. Expires in 10 minutes. Do not share this code.`,
-    MessageType: 'TRANSACTIONAL',
-    OriginationIdentity: ORIGINATION_NUMBER,
+  await sns.send(new PublishCommand({
+    PhoneNumber: phone,
+    Message: `Your Trinitect code is ${otp}. Expires in 10 min.`,
+    MessageAttributes: {
+      'AWS.SNS.SMS.SMSType': { DataType: 'String', StringValue: 'Transactional' },
+      'AWS.SNS.SMS.SenderID': { DataType: 'String', StringValue: 'Trinitect' },
+    },
   }));
 }
 
