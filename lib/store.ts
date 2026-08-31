@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState, DailyPlan, Domain, DomainScores, Goal, SmsPreferences, UserProfile } from './types';
+import type { AppState, DailyPlan, Domain, DomainScores, Goal, SmsPreferences, Task, TaskDifficulty, UserProfile } from './types';
 
 const KEY = 'trinitect_state';
 
@@ -19,6 +19,7 @@ const defaultState: AppState = {
   lastActiveDate: null,
   subscriptionPlan: 'free',
   goals: [],
+  tasks: [],
   history: [],
   currentGoal: {
     id: 'phase0-foundation',
@@ -101,6 +102,42 @@ export function archiveGoal(goalId: string): void {
     g.id === goalId ? { ...g, archived: true } : g
   );
   saveState({ ...state, goals });
+}
+
+export function addTask(goalId: string, title: string): void {
+  const state = loadState();
+  const newTask: Task = {
+    id: Math.random().toString(36).slice(2),
+    goalId,
+    title,
+    completed: false,
+    createdAt: new Date().toISOString().split('T')[0],
+  };
+  saveState({ ...state, tasks: [...(state.tasks || []), newTask] });
+}
+
+export function completeTask(taskId: string, difficulty: TaskDifficulty): void {
+  const state = loadState();
+  const tasks = (state.tasks || []).map(t =>
+    t.id === taskId
+      ? { ...t, completed: true, completedAt: new Date().toISOString().split('T')[0], difficulty }
+      : t
+  );
+  saveState({ ...state, tasks });
+}
+
+export function reopenTask(taskId: string): void {
+  const state = loadState();
+  const tasks = (state.tasks || []).map(t =>
+    t.id === taskId ? { ...t, completed: false, completedAt: undefined, difficulty: undefined } : t
+  );
+  saveState({ ...state, tasks });
+}
+
+export function deleteTask(taskId: string): void {
+  const state = loadState();
+  const tasks = (state.tasks || []).filter(t => t.id !== taskId);
+  saveState({ ...state, tasks });
 }
 
 export function completedAction(actionId: string): void {

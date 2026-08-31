@@ -2,6 +2,23 @@ export type Domain = 'physical' | 'mental' | 'spiritual';
 
 export type DomainScores = Record<Domain, number>; // 0–100
 
+// Semantic themes that cross-link patterns to goal categories
+export type PatternTheme =
+  | 'trust'       // faith, safety, reliance on something beyond yourself
+  | 'faith'       // belief and action despite uncertainty
+  | 'discipline'  // consistent follow-through on what matters
+  | 'focus'       // single-task attention, resisting distraction
+  | 'energy'      // physical vitality, output capacity
+  | 'resilience'  // recovering and adapting under pressure
+  | 'purpose'     // meaning, direction, the deeper why
+  | 'clarity'     // mental space, decision quality
+  | 'gratitude'   // appreciation, abundance orientation
+  | 'forgiveness' // releasing resentment, healing resistance
+  | 'connection'  // relationships, belonging, reaching out
+  | 'identity'    // who you are becoming through your choices
+  | 'avoidance'   // breaking procrastination and resistance patterns
+  | 'regulation'; // stress response, emotional steadiness
+
 export type Action = {
   id: string;
   domain: Domain;
@@ -9,7 +26,8 @@ export type Action = {
   duration: number; // minutes
   description: string;
   benefit: string;
-  reflection?: string; // Socratic question — opt-in WHY discovery
+  reflection?: string;  // Socratic question — opt-in WHY discovery
+  themes?: PatternTheme[]; // semantic tags for goal-matching (optional for back-compat)
   completed: boolean;
 };
 
@@ -32,7 +50,7 @@ export type UserProfile = {
   onboarded: boolean;
   phone?: string;
   smsPreferences?: SmsPreferences;
-  phoneSkipped?: boolean; // user dismissed the save-progress modal
+  phoneSkipped?: boolean;
 };
 
 export type StageGoal = {
@@ -68,6 +86,18 @@ export type Goal = {
   archived: boolean;
 };
 
+export type TaskDifficulty = 'smooth' | 'hard' | 'avoided';
+
+export type Task = {
+  id: string;
+  goalId: string;
+  title: string;
+  completed: boolean;
+  completedAt?: string;
+  difficulty?: TaskDifficulty;
+  createdAt: string;
+};
+
 export type SubscriptionPlan = 'free' | 'pro';
 
 export type AppState = {
@@ -80,5 +110,6 @@ export type AppState = {
   currentGoal: StageGoal;
   subscriptionPlan: SubscriptionPlan;
   goals: Goal[];
-  history: DayRecord[]; // last 90 days of daily completions
+  tasks: Task[];
+  history: DayRecord[];
 };

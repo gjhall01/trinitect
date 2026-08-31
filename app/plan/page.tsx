@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import ActionCard from '@/components/ActionCard';
 import { loadState, completedAction, updatePlan } from '@/lib/store';
-import { generateDailyPlan, getReplacementSuggestions } from '@/lib/mock-ai';
+import { generateDailyPlan, getReplacementSuggestions, explainPattern } from '@/lib/mock-ai';
 import type { AppState, Action } from '@/lib/types';
 
 const TRIGGER_OPTIONS = ['stress', 'boredom', 'fatigue', 'distraction'];
@@ -30,7 +30,7 @@ export default function PlanPage() {
     if (!s.profile.onboarded) { router.replace('/'); return; }
     const today = new Date().toISOString().split('T')[0];
     if (!s.todaysPlan || s.todaysPlan.date !== today) {
-      const plan = generateDailyPlan(s.profile, s.domainScores);
+      const plan = generateDailyPlan(s.profile, s.domainScores, s.goals || []);
       updatePlan(plan);
       setState({ ...s, todaysPlan: plan });
     } else {
@@ -51,7 +51,7 @@ export default function PlanPage() {
 
   const handleRefreshPlan = () => {
     if (!state) return;
-    const plan = generateDailyPlan(state.profile, state.domainScores);
+    const plan = generateDailyPlan(state.profile, state.domainScores, state.goals || []);
     updatePlan(plan);
     setState({ ...state, todaysPlan: plan });
   };
@@ -153,11 +153,18 @@ export default function PlanPage() {
             Patterns for today
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {actions.map((action, i) => (
-              <div key={action.id} className={`fade-up fade-up-d${i + 1}`}>
-                <ActionCard action={action} onComplete={handleComplete} />
-              </div>
-            ))}
+            {actions.map((action, i) => {
+              const badge = explainPattern(action, state.goals || []);
+              return (
+                <div key={action.id} className={`fade-up fade-up-d${i + 1}`}>
+                  <ActionCard
+                    action={action}
+                    onComplete={handleComplete}
+                    goalBadge={badge ?? undefined}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import { loadState, addGoal, updateGoal, toggleMilestone, archiveGoal } from '@/lib/store';
-import type { Goal, GoalCategory, GoalMilestone, Domain } from '@/lib/types';
+import { loadState, addGoal, toggleMilestone, archiveGoal, addTask, completeTask, deleteTask, reopenTask } from '@/lib/store';
+import { getGoalPatternSuggestions } from '@/lib/mock-ai';
+import type { Goal, GoalCategory, GoalMilestone, Domain, Task, TaskDifficulty } from '@/lib/types';
 
 const CATEGORY_CONFIG: Record<GoalCategory, { label: string; color: string; bg: string; icon: string }> = {
   career:        { label: 'Career',           color: 'var(--mental)',    bg: 'rgba(56,217,245,0.10)',   icon: '⬢' },
@@ -31,10 +32,269 @@ function formatTargetDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function GoalCard({ goal, onMilestone, onArchive }: {
+const DIFFICULTY_CONFIG: Record<TaskDifficulty, { label: string; color: string; bg: string }> = {
+  smooth:  { label: 'Smooth',  color: 'var(--physical)',  bg: 'rgba(168,255,62,0.10)'  },
+  hard:    { label: 'Hard',    color: '#ffd166',          bg: 'rgba(255,209,102,0.10)' },
+  avoided: { label: 'Avoided', color: '#ff8c69',          bg: 'rgba(255,140,105,0.10)' },
+};
+
+function TasksSection({ goal, tasks, onAdd, onComplete, onDelete, onReopen }: {
   goal: Goal;
+  tasks: Task[];
+  onAdd: (title: string) => void;
+  onComplete: (id: string, difficulty: TaskDifficulty) => void;
+  onDelete: (id: string) => void;
+  onReopen: (id: string) => void;
+}) {
+  const cfg = CATEGORY_CONFIG[goal.category];
+  const [input, setInput] = useState('');
+  const [showInput, setShowInput] = useState(false);
+  const [pendingComplete, setPendingComplete] = useState<string | null>(null);
+  const [patternTaskId, setPatternTaskId] = useState<string | null>(null);
+  const [patternContext, setPatternContext] = useState<'hard' | 'avoided'>('hard');
+
+  const openTasks = tasks.filter(t => !t.completed);
+  const recentDone = tasks.filter(t => t.completed).slice(-3);
+
+  function handleAdd() {
+    const title = input.trim();
+    if (!title) return;
+    onAdd(title);
+    setInput('');
+    setShowInput(false);
+  }
+
+  function handleDifficulty(taskId: string, difficulty: TaskDifficulty) {
+    onComplete(taskId, difficulty);
+    setPendingComplete(null);
+    if (difficulty === 'hard' || difficulty === 'avoided') {
+      setPatternTaskId(taskId);
+      setPatternContext(difficulty);
+    } else {
+      setPatternTaskId(null);
+    }
+  }
+
+  const suggestions = patternTaskId ? getGoalPatternSuggestions(goal.category, patternContext) : [];
+
+  const DOMAIN_COLORS: Record<string, string> = {
+    physical: 'var(--physical)', mental: 'var(--mental)', spiritual: 'var(--spiritual)',
+  };
+
+  return (
+    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          Tasks · {openTasks.length} open
+        </span>
+        <button
+          onClick={() => setShowInput(s => !s)}
+          style={{
+            background: 'none', border: `1px solid ${cfg.color}44`, borderRadius: 12,
+            padding: '2px 9px', cursor: 'pointer',
+            fontSize: 9, fontFamily: 'var(--font-mono)', color: cfg.color,
+            letterSpacing: '0.06em',
+          }}
+        >
+          + add
+        </button>
+      </div>
+
+      {showInput && (
+        <div style={{ display: 'flex', gap: 7, marginBottom: 10 }}>
+          <input
+            autoFocus
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setShowInput(false); setInput(''); } }}
+            placeholder="What's the next action?"
+            style={{
+              flex: 1, background: 'var(--surface2)', border: '1.5px solid var(--border)',
+              borderRadius: 8, padding: '8px 12px', color: 'var(--text1)', fontSize: 12,
+              fontFamily: 'var(--font-body)', outline: 'none',
+            }}
+            onFocus={e => e.target.style.borderColor = `${cfg.color}66`}
+            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+          />
+          <button
+            onClick={handleAdd}
+            disabled={!input.trim()}
+            style={{
+              background: cfg.color, border: 'none', borderRadius: 8,
+              padding: '0 14px', cursor: 'pointer',
+              color: 'var(--bg)', fontWeight: 700, fontSize: 16,
+              opacity: input.trim() ? 1 : 0.4,
+            }}
+          >
+            ↵
+          </button>
+        </div>
+      )}
+
+      {/* Open tasks */}
+      {openTasks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: recentDone.length ? 10 : 0 }}>
+          {openTasks.map(t => (
+            <div key={t.id}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '6px 8px',
+                background: pendingComplete === t.id ? 'var(--surface2)' : 'transparent',
+                borderRadius: 8, transition: 'background 0.15s',
+              }}>
+                <button
+                  onClick={() => setPendingComplete(pendingComplete === t.id ? null : t.id)}
+                  style={{
+                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                    border: `1.5px solid ${cfg.color}66`, background: 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {pendingComplete === t.id && (
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: cfg.color }} />
+                  )}
+                </button>
+                <span style={{ flex: 1, fontSize: 12, color: 'var(--text2)', lineHeight: 1.4 }}>{t.title}</span>
+                <button
+                  onClick={() => onDelete(t.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text4)', fontSize: 14, padding: '0 2px', lineHeight: 1 }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Difficulty picker */}
+              {pendingComplete === t.id && (
+                <div style={{ marginTop: 6, marginBottom: 4, padding: '10px 8px', background: 'var(--surface2)', borderRadius: 8, animation: 'fadeIn 0.15s ease both' }}>
+                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                    How did this go?
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {(Object.keys(DIFFICULTY_CONFIG) as TaskDifficulty[]).map(d => {
+                      const dc = DIFFICULTY_CONFIG[d];
+                      return (
+                        <button
+                          key={d}
+                          onClick={() => handleDifficulty(t.id, d)}
+                          style={{
+                            flex: 1, padding: '7px 4px',
+                            background: dc.bg, border: `1px solid ${dc.color}55`,
+                            borderRadius: 8, cursor: 'pointer',
+                            fontSize: 10, fontFamily: 'var(--font-mono)', color: dc.color,
+                            fontWeight: 600, letterSpacing: '0.04em',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {dc.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pattern recommendations (shown after hard/avoided completion) */}
+      {suggestions.length > 0 && (
+        <div style={{ marginBottom: 10, animation: 'fadeIn 0.25s ease both' }}>
+          <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: cfg.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+            {patternContext === 'avoided' ? 'Patterns that break avoidance' : 'Patterns to move through resistance'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {suggestions.map(({ pattern, matchedThemes, explanation }) => (
+              <div key={pattern.title} style={{
+                padding: '10px 12px',
+                background: 'var(--surface2)',
+                border: `1px solid ${DOMAIN_COLORS[pattern.domain]}22`,
+                borderLeft: `2px solid ${DOMAIN_COLORS[pattern.domain]}`,
+                borderRadius: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                  <span style={{
+                    fontSize: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                    letterSpacing: '0.08em', color: DOMAIN_COLORS[pattern.domain],
+                    background: `${DOMAIN_COLORS[pattern.domain]}15`,
+                    padding: '1px 6px', borderRadius: 10,
+                  }}>
+                    {pattern.domain}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text1)' }}>{pattern.title}</span>
+                  <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', marginLeft: 'auto' }}>{pattern.duration}m</span>
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                  {explanation} · {matchedThemes.slice(0, 2).join(', ')}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setPatternTaskId(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: '6px 0 0', letterSpacing: '0.06em' }}
+          >
+            dismiss ×
+          </button>
+        </div>
+      )}
+
+      {/* Recently completed tasks */}
+      {recentDone.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {recentDone.map(t => {
+            const dc = t.difficulty ? DIFFICULTY_CONFIG[t.difficulty] : null;
+            return (
+              <div key={t.id} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '5px 8px', opacity: 0.5,
+              }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                  background: cfg.color,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <span style={{ flex: 1, fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through', lineHeight: 1.4 }}>{t.title}</span>
+                {dc && (
+                  <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: dc.color, background: dc.bg, padding: '1px 6px', borderRadius: 10 }}>
+                    {dc.label}
+                  </span>
+                )}
+                <button
+                  onClick={() => onReopen(t.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: '0 2px' }}
+                >
+                  ↩
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {openTasks.length === 0 && recentDone.length === 0 && !showInput && (
+        <div style={{ fontSize: 11, color: 'var(--text4)', fontStyle: 'italic', padding: '4px 0' }}>
+          No tasks yet. What's the first step?
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GoalCard({ goal, tasks, onMilestone, onArchive, onAddTask, onCompleteTask, onDeleteTask, onReopenTask }: {
+  goal: Goal;
+  tasks: Task[];
   onMilestone: (goalId: string, milestoneId: string) => void;
   onArchive: (goalId: string) => void;
+  onAddTask: (goalId: string, title: string) => void;
+  onCompleteTask: (taskId: string, difficulty: TaskDifficulty) => void;
+  onDeleteTask: (taskId: string) => void;
+  onReopenTask: (taskId: string) => void;
 }) {
   const cfg = CATEGORY_CONFIG[goal.category];
   const days = daysUntil(goal.targetDate);
@@ -169,6 +429,16 @@ function GoalCard({ goal, onMilestone, onArchive }: {
           </div>
         </div>
       )}
+
+      {/* Tasks section */}
+      <TasksSection
+        goal={goal}
+        tasks={tasks}
+        onAdd={title => onAddTask(goal.id, title)}
+        onComplete={onCompleteTask}
+        onDelete={onDeleteTask}
+        onReopen={onReopenTask}
+      />
 
       {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
@@ -489,31 +759,59 @@ function AddGoalModal({ onClose, onSave }: {
 export default function GoalsPage() {
   const router = useRouter();
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
+  const refreshState = useCallback(() => {
+    const s = loadState();
+    setGoals((s.goals || []).filter(g => !g.archived));
+    setTasks(s.tasks || []);
+  }, []);
 
   useEffect(() => {
     const s = loadState();
     if (!s.profile.onboarded) { router.replace('/'); return; }
     setGoals((s.goals || []).filter(g => !g.archived));
+    setTasks(s.tasks || []);
     setMounted(true);
   }, [router]);
 
   const handleSave = useCallback((goalData: Omit<Goal, 'id' | 'createdAt'>) => {
     addGoal(goalData);
-    setGoals(loadState().goals.filter(g => !g.archived));
+    refreshState();
     setShowModal(false);
-  }, []);
+  }, [refreshState]);
 
   const handleMilestone = useCallback((goalId: string, milestoneId: string) => {
     toggleMilestone(goalId, milestoneId);
-    setGoals(loadState().goals.filter(g => !g.archived));
-  }, []);
+    refreshState();
+  }, [refreshState]);
 
   const handleArchive = useCallback((goalId: string) => {
     archiveGoal(goalId);
-    setGoals(loadState().goals.filter(g => !g.archived));
-  }, []);
+    refreshState();
+  }, [refreshState]);
+
+  const handleAddTask = useCallback((goalId: string, title: string) => {
+    addTask(goalId, title);
+    refreshState();
+  }, [refreshState]);
+
+  const handleCompleteTask = useCallback((taskId: string, difficulty: TaskDifficulty) => {
+    completeTask(taskId, difficulty);
+    refreshState();
+  }, [refreshState]);
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    deleteTask(taskId);
+    refreshState();
+  }, [refreshState]);
+
+  const handleReopenTask = useCallback((taskId: string) => {
+    reopenTask(taskId);
+    refreshState();
+  }, [refreshState]);
 
   if (!mounted) {
     return (
@@ -604,8 +902,13 @@ export default function GoalsPage() {
               <div key={goal.id} className={`fade-up fade-up-d${Math.min(i + 1, 5)}`}>
                 <GoalCard
                   goal={goal}
+                  tasks={tasks.filter(t => t.goalId === goal.id)}
                   onMilestone={handleMilestone}
                   onArchive={handleArchive}
+                  onAddTask={handleAddTask}
+                  onCompleteTask={handleCompleteTask}
+                  onDeleteTask={handleDeleteTask}
+                  onReopenTask={handleReopenTask}
                 />
               </div>
             ))}

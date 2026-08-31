@@ -6,9 +6,11 @@ import type { Action } from '@/lib/types';
 export default function ActionCard({
   action,
   onComplete,
+  goalBadge,
 }: {
   action: Action;
   onComplete: (id: string) => void;
+  goalBadge?: { goalTitle: string; matchedThemes: string[] };
 }) {
   const [showWhy, setShowWhy] = useState(false);
 
@@ -25,6 +27,21 @@ export default function ActionCard({
           </span>
           <span className="action-duration">{action.duration} min</span>
         </div>
+
+        {goalBadge && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            marginTop: 6,
+            fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+            color: 'var(--text3)',
+          }}>
+            <span style={{ color: action.domain === 'physical' ? 'var(--physical)' : action.domain === 'mental' ? 'var(--mental)' : 'var(--spiritual)', opacity: 0.7 }}>◆</span>
+            <span>For your {goalBadge.goalTitle} goal</span>
+            {goalBadge.matchedThemes.length > 0 && (
+              <span style={{ color: 'var(--text4)' }}>· builds {goalBadge.matchedThemes.slice(0, 2).join(' + ')}</span>
+            )}
+          </div>
+        )}
 
         {/* Why this? — opt-in, not front-loaded */}
         <button

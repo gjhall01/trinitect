@@ -72,7 +72,7 @@ export default function Dashboard() {
     }
     const today = new Date().toISOString().split('T')[0];
     if (!s.todaysPlan || s.todaysPlan.date !== today) {
-      const plan = generateDailyPlan(s.profile, s.domainScores);
+      const plan = generateDailyPlan(s.profile, s.domainScores, s.goals || []);
       updatePlan(plan);
       setState({ ...s, todaysPlan: plan });
     } else {
