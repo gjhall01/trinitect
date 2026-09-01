@@ -12,6 +12,57 @@ import type { AppState, Action, Goal, Task } from '@/lib/types';
 const TRIGGERS = ['stress', 'boredom', 'fatigue', 'distraction'];
 const STREAK_MILESTONES = new Set([1, 3, 7, 14, 21, 30, 60, 90]);
 
+function generateBrief(
+  streak: number,
+  domainScores: Record<string, number>,
+  drivers: string[],
+  allDone: boolean,
+  completedCount: number,
+): string | null {
+  if (allDone) return null;
+  const hour = new Date().getHours();
+  const dow = new Date().getDay(); // 0=Sun
+
+  // Evening urgency (handled separately by the red nudge — skip here)
+  if (hour >= 18 && completedCount === 0 && streak > 0) return null;
+
+  // Streak-specific coaching
+  if (streak >= 30) return `${streak} days. This is who you are now.`;
+  if (streak >= 21) return `${streak} consecutive days. The identity has shifted. Keep building.`;
+  if (streak === 20) return 'Tomorrow is 21 days. Cross that threshold.';
+  if (streak >= 14) return `${streak} days straight. Most patterns are running automatically by now.`;
+  if (streak === 6) return 'Six days in. Day seven is where identity begins.';
+  if (streak >= 7) return `${streak} days. You\'re past the threshold where most people stop.`;
+  if (streak === 3) return 'Three days in a row. The first pattern is forming.';
+
+  // Domain imbalance — find lowest
+  const domains = ['physical', 'mental', 'spiritual'] as const;
+  const lowest = domains.reduce((a, b) => domainScores[a] <= domainScores[b] ? a : b);
+  const lowestScore = domainScores[lowest];
+  const labels: Record<string, string> = { physical: 'Physical', mental: 'Mental', spiritual: 'Spiritual' };
+  if (lowestScore < 38 && streak >= 2) {
+    return `${labels[lowest]} is your edge. One session here and everything compounds faster.`;
+  }
+
+  // Weekend / day-of-week
+  if (dow === 0 || dow === 6) {
+    return 'Weekends are where habits break. Showing up today is the whole point.';
+  }
+  if (dow === 1) return 'Monday. The pattern you build today sets the tone for the week.';
+  if (dow === 5) return 'Friday. Close the week — your future self will notice.';
+
+  // Driver-based
+  if (drivers.includes('Discipline')) return 'Discipline is doing it when you don\'t feel like it. That\'s today.';
+  if (drivers.includes('Vitality')) return 'Every session is infrastructure for the version of you that has more energy.';
+  if (drivers.includes('Meaning')) return 'The patterns serve the purpose. Show up for both.';
+  if (drivers.includes('Mastery')) return 'Mastery is built in the small sessions nobody sees.';
+
+  // Fallback
+  if (streak === 0) return 'Day one. The hardest decision is already behind you.';
+  if (streak === 1) return 'Yesterday happened. Now make it two in a row.';
+  return 'Small proof. Every session is evidence of who you\'re becoming.';
+}
+
 function greeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -480,6 +531,21 @@ export default function TodayPage() {
             )}
           </div>
           <p className="page-date">{formatDate()}</p>
+          {(() => {
+            const brief = generateBrief(streak, state.domainScores, profile.values || [], allDone, completedCount);
+            if (!brief) return null;
+            return (
+              <p style={{
+                fontSize: 11, fontFamily: 'var(--font-mono)',
+                color: 'var(--text3)', marginTop: 10,
+                fontStyle: 'italic', lineHeight: 1.6,
+                borderLeft: '2px solid rgba(168,255,62,0.25)',
+                paddingLeft: 10,
+              }}>
+                {brief}
+              </p>
+            );
+          })()}
         </div>
 
         {/* Progress bar */}
