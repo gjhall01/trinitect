@@ -125,22 +125,53 @@ function LoginForm() {
             {loading ? 'Sending…' : 'Send code →'}
           </button>
 
-          <div style={{ marginTop: 20, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ marginTop: 20, textAlign: 'center' }}>
             <button
               onClick={() => router.push('/')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em' }}
             >
               New here? Create an account →
             </button>
+          </div>
+
+          <div style={{
+            marginTop: 24,
+            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          }}>
+            <div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontWeight: 500, letterSpacing: '0.04em' }}>
+                Can't get in?
+              </div>
+              <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text4)', marginTop: 2 }}>
+                Clear your data and start over
+              </div>
+            </div>
             <button
               onClick={() => {
                 clearToken();
                 localStorage.clear();
                 fetch('/api/auth/logout', { method: 'POST' }).finally(() => router.replace('/'));
               }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em', opacity: 0.5 }}
+              style={{
+                background: 'none',
+                border: '1px solid var(--border)',
+                borderRadius: 7,
+                padding: '6px 14px',
+                fontSize: 11, fontFamily: 'var(--font-mono)',
+                color: 'var(--text3)',
+                cursor: 'pointer',
+                letterSpacing: '0.04em',
+                flexShrink: 0,
+                transition: 'all var(--transition)',
+              }}
+              onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--text3)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text1)'; }}
+              onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text3)'; }}
             >
-              Reset & start fresh
+              Reset →
             </button>
           </div>
         </>
