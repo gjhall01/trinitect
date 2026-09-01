@@ -489,6 +489,11 @@ export default function TodayPage() {
                   ))}
                 </div>
               )}
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={() => router.push('/patterns')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--mental)', padding: 0 }}>
+                  Browse all patterns →
+                </button>
+              </div>
             </div>
           )}
         </div>
