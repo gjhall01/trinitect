@@ -229,6 +229,16 @@ function getDomainInsight(domain: Domain, score: number): string {
   return ins.automatic;
 }
 
+function getNextMilestone(score: number): { threshold: number; sessionsNeeded: number } | null {
+  const thresholds = [50, 65, 80, 100];
+  for (const t of thresholds) {
+    if (score < t) {
+      return { threshold: t, sessionsNeeded: Math.ceil((t - score) / 8) };
+    }
+  }
+  return null;
+}
+
 function DomainBar({ domain, score, completions }: { domain: Domain; score: number; completions: number }) {
   const cfg = DOMAIN_CONFIG[domain];
   const velocity = completions > 0 ? '+' + completions + ' sessions' : 'not yet started';
@@ -278,6 +288,24 @@ function DomainBar({ domain, score, completions }: { domain: Domain; score: numb
           {getDomainInsight(domain, score)}
         </p>
       )}
+      {(() => {
+        const next = getNextMilestone(score);
+        if (!next || score >= 100) return null;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6 }}>
+            <div style={{ flex: 1, background: 'var(--surface3)', borderRadius: 2, height: 2, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', background: cfg.color, opacity: 0.4,
+                width: `${((score - (next.threshold - (next.sessionsNeeded * 8))) / (next.sessionsNeeded * 8)) * 100}%`,
+                transition: 'width 1s ease',
+              }} />
+            </div>
+            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', whiteSpace: 'nowrap' }}>
+              {next.sessionsNeeded}× to {next.threshold}
+            </span>
+          </div>
+        );
+      })()}
     </div>
   );
 }
