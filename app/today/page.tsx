@@ -252,6 +252,7 @@ export default function TodayPage() {
   const [selectedTrigger, setSelectedTrigger] = useState<string | null>(null);
   const [replacements, setReplacements] = useState<string[]>([]);
   const [milestoneStreak, setMilestoneStreak] = useState<number | null>(null);
+  const [habitMilestone, setHabitMilestone] = useState<{ title: string; count: number } | null>(null);
 
   useEffect(() => {
     const s = loadState();
@@ -289,7 +290,7 @@ export default function TodayPage() {
     if (shouldShowSavePrompt(updated)) {
       setTimeout(() => setShowSaveModal(true), 700);
     }
-    // Check for streak milestone (only fires on the final pattern completing all 3)
+    // Check for streak milestone
     const allDoneNow = updated.todaysPlan?.actions.every(a => a.completed);
     const wasDoneAlready = before.todaysPlan?.actions.every(a => a.completed);
     if (allDoneNow && !wasDoneAlready && STREAK_MILESTONES.has(updated.streak)) {
@@ -297,6 +298,18 @@ export default function TodayPage() {
         setMilestoneStreak(updated.streak);
         setTimeout(() => setMilestoneStreak(null), 5000);
       }, 500);
+    }
+    // Check for habit milestone (7, 14, 21 reps of a single pattern)
+    const completedAct = before.todaysPlan?.actions.find(a => a.id === actionId);
+    if (completedAct) {
+      const prevCount = (before.patternCounts || {})[completedAct.title] || 0;
+      const newCount = (updated.patternCounts || {})[completedAct.title] || 0;
+      if ([7, 14, 21].includes(newCount) && prevCount < newCount) {
+        setTimeout(() => {
+          setHabitMilestone({ title: completedAct.title, count: newCount });
+          setTimeout(() => setHabitMilestone(null), 6000);
+        }, 800);
+      }
     }
   }, []);
 
@@ -414,6 +427,28 @@ export default function TodayPage() {
           <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid rgba(168,255,62,0.3)', borderRadius: 40, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 600, animation: 'toastIn 0.3s ease both', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
             <span style={{ color: 'var(--physical)', fontSize: 15 }}>✓</span>
             <span style={{ fontSize: 13, color: 'var(--text1)', fontWeight: 500 }}>Progress saved</span>
+          </div>
+        )}
+        {habitMilestone && (
+          <div style={{
+            position: 'fixed', top: milestoneStreak ? 80 : 20, left: '50%', transform: 'translateX(-50%)',
+            background: 'linear-gradient(135deg, var(--surface) 0%, rgba(212,160,255,0.04) 100%)',
+            border: '1px solid rgba(212,160,255,0.4)',
+            borderRadius: 40, padding: '14px 28px',
+            display: 'flex', alignItems: 'center', gap: 14,
+            zIndex: 599, animation: 'toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+            boxShadow: '0 12px 48px rgba(212,160,255,0.15)',
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{ fontSize: 20 }}>◈</span>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--spiritual)', fontWeight: 800, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                {habitMilestone.count === 21 ? 'Habit locked in.' : habitMilestone.count === 14 ? 'Almost automatic.' : 'Pattern forming.'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                {habitMilestone.title} · {habitMilestone.count}× completed
+              </div>
+            </div>
           </div>
         )}
 
