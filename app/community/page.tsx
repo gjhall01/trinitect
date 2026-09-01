@@ -552,6 +552,7 @@ export default function CommunityPage() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('for-you');
+  const [sortOrder, setSortOrder] = useState<'recent' | 'loved'>('recent');
   const [heartedIds, setHeartedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -634,11 +635,16 @@ export default function CommunityPage() {
   }
 
   // Filter
-  const filtered = categoryFilter === 'all'
+  const categoryFiltered = categoryFilter === 'all'
     ? annotatedPosts
     : categoryFilter === 'for-you'
       ? annotatedPosts.filter(matchesForYou)
       : annotatedPosts.filter(p => p.category === categoryFilter);
+
+  // Sort
+  const filtered = sortOrder === 'loved'
+    ? [...categoryFiltered].sort((a, b) => b.hearts - a.hearts)
+    : categoryFiltered; // already date-sorted from API
 
   // Seed stories: show as editorial if fewer than 10 real posts
   const showSeeds = realPosts.length < 10;
@@ -704,8 +710,9 @@ export default function CommunityPage() {
           )}
         </div>
 
-        {/* Filter bar */}
-        <div className="fade-up fade-up-d1" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 }}>
+        {/* Filter bar + sort */}
+        <div className="fade-up fade-up-d1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
           {CATEGORY_FILTERS.map(cat => {
             const isForYou = cat === 'for-you';
             const isAll = cat === 'all';
@@ -735,6 +742,27 @@ export default function CommunityPage() {
               </button>
             );
           })}
+          </div>
+          {/* Sort order toggle */}
+          <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 3, flexShrink: 0 }}>
+            {(['recent', 'loved'] as const).map(order => (
+              <button
+                key={order}
+                onClick={() => setSortOrder(order)}
+                style={{
+                  padding: '4px 12px', borderRadius: 16,
+                  background: sortOrder === order ? 'var(--surface2)' : 'none',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: 10, fontFamily: 'var(--font-mono)',
+                  color: sortOrder === order ? 'var(--text2)' : 'var(--text4)',
+                  transition: 'all var(--transition)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {order === 'recent' ? '↓ new' : '♥ loved'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Feed */}
