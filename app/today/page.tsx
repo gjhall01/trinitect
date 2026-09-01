@@ -250,6 +250,7 @@ export default function TodayPage() {
   const [showReplace, setShowReplace] = useState(false);
   const [selectedTrigger, setSelectedTrigger] = useState<string | null>(null);
   const [replacements, setReplacements] = useState<string[]>([]);
+  const [milestoneStreak, setMilestoneStreak] = useState<number | null>(null);
 
   useEffect(() => {
     const s = loadState();
@@ -274,12 +275,24 @@ export default function TodayPage() {
     }
   }, [router]);
 
+  const STREAK_MILESTONES = [1, 3, 7, 14, 21, 30, 60, 90];
+
   const handleComplete = useCallback((actionId: string) => {
+    const before = loadState();
     completedAction(actionId);
     const updated = loadState();
     setState(updated);
     if (shouldShowSavePrompt(updated)) {
       setTimeout(() => setShowSaveModal(true), 700);
+    }
+    // Check for streak milestone (only fires on the final pattern completing all 3)
+    const allDoneNow = updated.todaysPlan?.actions.every(a => a.completed);
+    const wasDoneAlready = before.todaysPlan?.actions.every(a => a.completed);
+    if (allDoneNow && !wasDoneAlready && STREAK_MILESTONES.includes(updated.streak)) {
+      setTimeout(() => {
+        setMilestoneStreak(updated.streak);
+        setTimeout(() => setMilestoneStreak(null), 5000);
+      }, 500);
     }
   }, []);
 
@@ -322,6 +335,34 @@ export default function TodayPage() {
       <div style={{ maxWidth: 680 }}>
 
         {/* Toasts */}
+        {milestoneStreak && (
+          <div style={{
+            position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+            background: 'linear-gradient(135deg, var(--surface) 0%, rgba(168,255,62,0.04) 100%)',
+            border: '1px solid rgba(168,255,62,0.5)',
+            borderRadius: 40, padding: '14px 28px',
+            display: 'flex', alignItems: 'center', gap: 14,
+            zIndex: 600, animation: 'toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+            boxShadow: '0 12px 48px rgba(168,255,62,0.2)',
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{ fontSize: 22, lineHeight: 1 }}>✦</span>
+            <div>
+              <div style={{ fontSize: 15, color: 'var(--physical)', fontWeight: 800, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                {milestoneStreak} day streak.
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                {milestoneStreak === 1 ? 'The first is the hardest.' :
+                 milestoneStreak === 3 ? 'Three in a row. Keep going.' :
+                 milestoneStreak === 7 ? 'One week. This is becoming real.' :
+                 milestoneStreak === 14 ? 'Two weeks straight. You\'re building something.' :
+                 milestoneStreak === 21 ? '21 days. You\'ve crossed the threshold.' :
+                 milestoneStreak === 30 ? 'A full month. This is who you are now.' :
+                 `${milestoneStreak} consecutive days. Compounding.`}
+              </div>
+            </div>
+          </div>
+        )}
         {showUpgradeToast && (
           <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid rgba(168,255,62,0.4)', borderRadius: 40, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, zIndex: 600, animation: 'toastIn 0.3s ease both', boxShadow: '0 8px 40px rgba(168,255,62,0.15)', whiteSpace: 'nowrap' }}>
             <span style={{ fontSize: 18 }}>✦</span>
