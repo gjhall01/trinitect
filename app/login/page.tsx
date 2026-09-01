@@ -1,15 +1,13 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { requestOTP, verifyOTP, setToken } from '@/lib/api-client';
 import { hydrateFromServer } from '@/lib/store';
 
 type Step = 'phone' | 'code';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('phone');
@@ -93,6 +91,111 @@ export default function LoginPage() {
 
   return (
     <div style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      padding: '36px 32px',
+    }}>
+      {step === 'phone' && (
+        <>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', marginBottom: 8 }}>
+            Welcome back.
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginBottom: 28, lineHeight: 1.6 }}>
+            Enter your phone number and we'll send a verification code.
+          </p>
+
+          <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8 }}>
+            Phone number
+          </label>
+          <input
+            className="text-input"
+            style={{ marginBottom: error ? 8 : 20, fontSize: 18, letterSpacing: '0.04em' }}
+            type="tel"
+            placeholder="(555) 000-0000"
+            value={phone}
+            onChange={e => { setPhone(formatPhone(e.target.value)); setError(''); }}
+            onKeyDown={e => e.key === 'Enter' && handleSendCode()}
+            autoFocus
+          />
+
+          {error && <div style={{ fontSize: 11, color: '#ff8c69', fontFamily: 'var(--font-mono)', marginBottom: 16 }}>{error}</div>}
+
+          <button className="primary-btn" disabled={loading || e164(phone).length !== 12} onClick={handleSendCode}>
+            {loading ? 'Sending…' : 'Send code →'}
+          </button>
+
+          <div style={{ marginTop: 20, textAlign: 'center' }}>
+            <button
+              onClick={() => router.push('/')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em' }}
+            >
+              New here? Create an account →
+            </button>
+          </div>
+        </>
+      )}
+
+      {step === 'code' && (
+        <>
+          <button
+            onClick={() => { setStep('phone'); setCode(''); setError(''); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}
+          >
+            ← Change number
+          </button>
+
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', marginBottom: 8 }}>
+            Check your phone.
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginBottom: 6, lineHeight: 1.6 }}>
+            We sent a 6-digit code to
+          </p>
+          <p style={{ fontSize: 14, color: 'var(--physical)', fontFamily: 'var(--font-mono)', fontWeight: 600, marginBottom: 28 }}>
+            {phone}
+          </p>
+
+          <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8 }}>
+            Verification code
+          </label>
+          <input
+            ref={codeRef}
+            className="text-input"
+            style={{ marginBottom: error ? 8 : 20, fontSize: 24, letterSpacing: '0.3em', textAlign: 'center', fontFamily: 'var(--font-mono)' }}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={6}
+            placeholder="——————"
+            value={code}
+            onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+            onKeyDown={e => e.key === 'Enter' && handleVerify()}
+          />
+
+          {error && <div style={{ fontSize: 11, color: '#ff8c69', fontFamily: 'var(--font-mono)', marginBottom: 16 }}>{error}</div>}
+
+          <button className="primary-btn" disabled={loading || code.length !== 6} onClick={handleVerify}>
+            {loading ? 'Verifying…' : 'Verify →'}
+          </button>
+
+          <div style={{ marginTop: 16, textAlign: 'center' }}>
+            <button
+              onClick={handleResend}
+              disabled={resendCountdown > 0}
+              style={{ background: 'none', border: 'none', cursor: resendCountdown > 0 ? 'default' : 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: resendCountdown > 0 ? 'var(--text4)' : 'var(--mental)', letterSpacing: '0.06em' }}
+            >
+              {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend code'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div style={{
       minHeight: '100vh',
       background: 'var(--bg)',
       display: 'flex',
@@ -101,8 +204,6 @@ export default function LoginPage() {
       padding: '24px 20px',
     }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
-
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{
             width: 44, height: 44,
@@ -115,120 +216,15 @@ export default function LoginPage() {
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Trinitect</div>
         </div>
 
-        <div style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          padding: '36px 32px',
-        }}>
-
-          {step === 'phone' && (
-            <>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', marginBottom: 8 }}>
-                Welcome back.
-              </h1>
-              <p style={{ fontSize: 13, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginBottom: 28, lineHeight: 1.6 }}>
-                Enter your phone number and we'll send a verification code.
-              </p>
-
-              <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8 }}>
-                Phone number
-              </label>
-              <input
-                className="text-input"
-                style={{ marginBottom: error ? 8 : 20, fontSize: 18, letterSpacing: '0.04em' }}
-                type="tel"
-                placeholder="(555) 000-0000"
-                value={phone}
-                onChange={e => { setPhone(formatPhone(e.target.value)); setError(''); }}
-                onKeyDown={e => e.key === 'Enter' && handleSendCode()}
-                autoFocus
-              />
-
-              {error && (
-                <div style={{ fontSize: 11, color: '#ff8c69', fontFamily: 'var(--font-mono)', marginBottom: 16 }}>{error}</div>
-              )}
-
-              <button
-                className="primary-btn"
-                disabled={loading || e164(phone).length !== 12}
-                onClick={handleSendCode}
-              >
-                {loading ? 'Sending…' : 'Send code →'}
-              </button>
-
-              <div style={{ marginTop: 20, textAlign: 'center' }}>
-                <button
-                  onClick={() => router.push('/')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em' }}
-                >
-                  New here? Create an account →
-                </button>
-              </div>
-            </>
-          )}
-
-          {step === 'code' && (
-            <>
-              <button
-                onClick={() => { setStep('phone'); setCode(''); setError(''); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}
-              >
-                ← Change number
-              </button>
-
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', marginBottom: 8 }}>
-                Check your phone.
-              </h1>
-              <p style={{ fontSize: 13, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginBottom: 6, lineHeight: 1.6 }}>
-                We sent a 6-digit code to
-              </p>
-              <p style={{ fontSize: 14, color: 'var(--physical)', fontFamily: 'var(--font-mono)', fontWeight: 600, marginBottom: 28 }}>
-                {phone}
-              </p>
-
-              <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8 }}>
-                Verification code
-              </label>
-              <input
-                ref={codeRef}
-                className="text-input"
-                style={{ marginBottom: error ? 8 : 20, fontSize: 24, letterSpacing: '0.3em', textAlign: 'center', fontFamily: 'var(--font-mono)' }}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                placeholder="——————"
-                value={code}
-                onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
-                onKeyDown={e => e.key === 'Enter' && handleVerify()}
-              />
-
-              {error && (
-                <div style={{ fontSize: 11, color: '#ff8c69', fontFamily: 'var(--font-mono)', marginBottom: 16 }}>{error}</div>
-              )}
-
-              <button
-                className="primary-btn"
-                disabled={loading || code.length !== 6}
-                onClick={handleVerify}
-              >
-                {loading ? 'Verifying…' : 'Verify →'}
-              </button>
-
-              <div style={{ marginTop: 16, textAlign: 'center' }}>
-                <button
-                  onClick={handleResend}
-                  disabled={resendCountdown > 0}
-                  style={{ background: 'none', border: 'none', cursor: resendCountdown > 0 ? 'default' : 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: resendCountdown > 0 ? 'var(--text4)' : 'var(--mental)', letterSpacing: '0.06em' }}
-                >
-                  {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend code'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        <Suspense fallback={
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '36px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+            <div style={{ width: 24, height: 24, border: '2px solid rgba(168,255,62,0.2)', borderTopColor: '#a8ff3e', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        }>
+          <LoginForm />
+        </Suspense>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
