@@ -10,6 +10,7 @@ import { generateDailyPlan, explainPattern, getReplacementSuggestions } from '@/
 import type { AppState, Action, Goal, Task } from '@/lib/types';
 
 const TRIGGERS = ['stress', 'boredom', 'fatigue', 'distraction'];
+const STREAK_MILESTONES = new Set([1, 3, 7, 14, 21, 30, 60, 90]);
 
 function greeting() {
   const h = new Date().getHours();
@@ -275,8 +276,6 @@ export default function TodayPage() {
     }
   }, [router]);
 
-  const STREAK_MILESTONES = [1, 3, 7, 14, 21, 30, 60, 90];
-
   const handleComplete = useCallback((actionId: string) => {
     const before = loadState();
     completedAction(actionId);
@@ -288,7 +287,7 @@ export default function TodayPage() {
     // Check for streak milestone (only fires on the final pattern completing all 3)
     const allDoneNow = updated.todaysPlan?.actions.every(a => a.completed);
     const wasDoneAlready = before.todaysPlan?.actions.every(a => a.completed);
-    if (allDoneNow && !wasDoneAlready && STREAK_MILESTONES.includes(updated.streak)) {
+    if (allDoneNow && !wasDoneAlready && STREAK_MILESTONES.has(updated.streak)) {
       setTimeout(() => {
         setMilestoneStreak(updated.streak);
         setTimeout(() => setMilestoneStreak(null), 5000);
@@ -381,9 +380,31 @@ export default function TodayPage() {
 
         {/* Header */}
         <div className="fade-up" style={{ marginBottom: 28 }}>
-          <h1 className="page-greeting">
-            {greeting()}{profile.name ? `, ${profile.name}.` : '.'}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <h1 className="page-greeting">
+              {greeting()}{profile.name ? `, ${profile.name}.` : '.'}
+            </h1>
+            {streak === 0 && (
+              <div style={{
+                fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                letterSpacing: '0.1em', padding: '4px 10px', borderRadius: 20,
+                background: 'rgba(168,255,62,0.08)', border: '1px solid rgba(168,255,62,0.2)',
+                color: 'var(--physical)', flexShrink: 0, marginTop: 6, marginLeft: 12,
+              }}>
+                Day 1
+              </div>
+            )}
+            {streak > 0 && (
+              <div style={{
+                fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                letterSpacing: '0.1em', padding: '4px 10px', borderRadius: 20,
+                background: 'var(--surface2)', border: '1px solid var(--border)',
+                color: 'var(--text3)', flexShrink: 0, marginTop: 6, marginLeft: 12,
+              }}>
+                {streak}d streak
+              </div>
+            )}
+          </div>
           <p className="page-date">{formatDate()}</p>
         </div>
 
