@@ -127,4 +127,5 @@ export type AppState = {
   tasks: Task[];
   history: DayRecord[];
   journal: PatternJournalEntry[];
+  patternCounts: Record<string, number>; // pattern title → total completions
 };

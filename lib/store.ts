@@ -50,6 +50,7 @@ const defaultState: AppState = {
   tasks: [],
   history: [],
   journal: [],
+  patternCounts: {},
   currentGoal: {
     id: 'phase0-foundation',
     title: '21-Day Foundation',
@@ -198,6 +199,13 @@ export function swapAction(actionId: string, replacement: Omit<import('./types')
   saveState({ ...state, todaysPlan: { ...state.todaysPlan, actions } });
 }
 
+export function regeneratePlan(): void {
+  const state = loadState();
+  const today = new Date().toISOString().split('T')[0];
+  // Wipe today's plan — caller will use generateDailyPlan to get a fresh one
+  saveState({ ...state, todaysPlan: { date: today, actions: [] } });
+}
+
 export function addJournalEntry(entry: PatternJournalEntry): void {
   const state = loadState();
   const journal = [...(state.journal || []), entry].slice(-365); // keep up to 1 year
@@ -248,18 +256,24 @@ export function completedAction(actionId: string, reflection?: { question: strin
     }
   }
 
-  const completedAction = state.todaysPlan?.actions.find(a => a.id === actionId);
+  const completedActionObj = state.todaysPlan?.actions.find(a => a.id === actionId);
   let journal = state.journal || [];
-  if (reflection?.response && completedAction) {
+  if (reflection?.response && completedActionObj) {
     const entry: PatternJournalEntry = {
       date: today,
       actionId,
-      actionTitle: completedAction.title,
-      domain: completedAction.domain,
+      actionTitle: completedActionObj.title,
+      domain: completedActionObj.domain,
       question: reflection.question,
       response: reflection.response,
     };
     journal = [...journal, entry].slice(-365);
+  }
+
+  // Track how many times each pattern title has been completed
+  const patternCounts = { ...(state.patternCounts || {}) };
+  if (completedActionObj) {
+    patternCounts[completedActionObj.title] = (patternCounts[completedActionObj.title] || 0) + 1;
   }
 
   saveState({
@@ -271,6 +285,7 @@ export function completedAction(actionId: string, reflection?: { question: strin
     lastActiveDate: allDone ? today : state.lastActiveDate,
     history,
     journal,
+    patternCounts,
     currentGoal: {
       ...state.currentGoal,
       completedDays: allDone && state.lastActiveDate !== today

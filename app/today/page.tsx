@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import ActionCard from '@/components/ActionCard';
 import SaveProgressModal from '@/components/SaveProgressModal';
-import { loadState, completedAction, swapAction, updatePlan, updateProfile } from '@/lib/store';
+import { loadState, completedAction, swapAction, updatePlan, updateProfile, regeneratePlan } from '@/lib/store';
 import { generateDailyPlan, explainPattern, getReplacementSuggestions } from '@/lib/mock-ai';
 import type { AppState, Action, Goal, Task } from '@/lib/types';
 
@@ -312,6 +312,13 @@ export default function TodayPage() {
     setState(loadState());
   }, []);
 
+  const handleRegenerate = useCallback(() => {
+    const s = loadState();
+    const plan = generateDailyPlan(s.profile, s.domainScores, s.goals || []);
+    updatePlan(plan);
+    setState({ ...s, todaysPlan: plan });
+  }, []);
+
   if (!mounted || !state) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
@@ -592,8 +599,27 @@ export default function TodayPage() {
 
         {/* Pattern cards */}
         <div className="fade-up fade-up-d2" style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text4)', marginBottom: 12 }}>
-            Today's practice
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text4)' }}>
+              Today's practice
+            </div>
+            {!allDone && completedCount === 0 && (
+              <button
+                onClick={handleRegenerate}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)',
+                  letterSpacing: '0.06em', padding: '2px 0',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  transition: 'color var(--transition)',
+                }}
+                onMouseOver={e => (e.currentTarget.style.color = 'var(--text2)')}
+                onMouseOut={e => (e.currentTarget.style.color = 'var(--text4)')}
+                title="Get a different set of patterns for today"
+              >
+                ↻ different patterns
+              </button>
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {actions.map((action, i) => {

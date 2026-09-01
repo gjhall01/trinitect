@@ -290,7 +290,7 @@ export default function ProgressPage() {
     );
   }
 
-  const { domainScores, streak, longestStreak, history = [], goals = [], journal = [] } = state;
+  const { domainScores, streak, longestStreak, history = [], goals = [], journal = [], patternCounts = {} } = state;
   const historyMap = buildHistoryMap(history);
   const completions = estimateCompletions(domainScores);
   const totalPatterns = completions.physical + completions.mental + completions.spiritual;
@@ -500,6 +500,57 @@ export default function ProgressPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Built Habits */}
+        {Object.keys(patternCounts).length > 0 && (
+          <div className="fade-up" style={{ marginTop: 20 }}>
+            <div className="panel-title">Built Habits</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+              {Object.entries(patternCounts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 6)
+                .map(([title, count]) => {
+                  const pct = Math.min(100, Math.round((count / 21) * 100));
+                  const isHabit = count >= 21;
+                  const color = isHabit ? 'var(--physical)' : count >= 7 ? 'var(--mental)' : 'var(--spiritual)';
+                  return (
+                    <div key={title} style={{
+                      background: 'var(--surface)',
+                      border: `1px solid ${isHabit ? 'rgba(168,255,62,0.25)' : 'var(--border)'}`,
+                      borderRadius: 'var(--radius)',
+                      padding: '16px 18px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text1)', lineHeight: 1.3, flex: 1, paddingRight: 8 }}>
+                          {title}
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>
+                            {count}×
+                          </div>
+                          {isHabit && (
+                            <div style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: 'var(--physical)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>
+                              habit
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ background: 'var(--surface3)', borderRadius: 2, height: 3, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: 2, background: color,
+                          width: `${pct}%`, transition: 'width 1s ease',
+                          boxShadow: isHabit ? `0 0 6px ${color}60` : 'none',
+                        }} />
+                      </div>
+                      <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', marginTop: 5 }}>
+                        {isHabit ? 'Automatic — this is part of you now' : `${21 - count} more to make it automatic`}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
