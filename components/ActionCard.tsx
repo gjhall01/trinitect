@@ -102,6 +102,7 @@ export default function ActionCard({
   const [showReflect, setShowReflect] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
   const [reflectionText, setReflectionText] = useState('');
+  const [completing, setCompleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const color = DOMAIN_COLOR[action.domain] || 'var(--physical)';
 
@@ -113,6 +114,7 @@ export default function ActionCard({
 
   function handleCompleteClick() {
     if (action.completed) return;
+    setCompleting(true);
     if (action.reflection) {
       setShowReflect(true);
       setShowWhy(false);
@@ -137,7 +139,7 @@ export default function ActionCard({
 
   return (
     <div
-      className={`action-card ${action.completed ? 'completed' : ''}`}
+      className={`action-card ${action.completed ? 'completed' : ''} ${completing ? 'completing' : ''}`}
       data-domain={action.domain}
     >
       <div className="action-body">
@@ -316,7 +318,7 @@ export default function ActionCard({
       </div>
 
       <button
-        className={`complete-btn ${action.completed ? 'done' : ''}`}
+        className={`complete-btn ${action.completed ? 'done' : ''} ${completing ? 'completing' : ''}`}
         onClick={handleCompleteClick}
         aria-label={action.completed ? 'Pattern built' : 'Build this pattern'}
         title={action.completed ? 'Completed' : action.description}
