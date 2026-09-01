@@ -171,25 +171,39 @@ export default function SettingsPage() {
           <Section title="Account">
             <Row
               label={phone ? maskPhone(phone) : 'No phone linked'}
-              sub="Trinitect account"
+              sub={isAuthenticated ? 'Trinitect account' : 'Progress stored on this device only'}
               right={
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '4px 10px', borderRadius: 20,
-                  background: isAuthenticated ? 'rgba(168,255,62,0.08)' : 'var(--surface2)',
-                  border: `1px solid ${isAuthenticated ? 'rgba(168,255,62,0.25)' : 'var(--border)'}`,
-                }}>
+                phone ? (
                   <div style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: isAuthenticated ? 'var(--physical)' : 'var(--text4)',
-                  }} />
-                  <span style={{
-                    fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
-                    color: isAuthenticated ? 'var(--physical)' : 'var(--text4)',
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px', borderRadius: 20,
+                    background: isAuthenticated ? 'rgba(168,255,62,0.08)' : 'var(--surface2)',
+                    border: `1px solid ${isAuthenticated ? 'rgba(168,255,62,0.25)' : 'var(--border)'}`,
                   }}>
-                    {isAuthenticated ? 'authenticated' : 'local only'}
-                  </span>
-                </div>
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: isAuthenticated ? 'var(--physical)' : 'var(--text4)',
+                    }} />
+                    <span style={{
+                      fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                      color: isAuthenticated ? 'var(--physical)' : 'var(--text4)',
+                    }}>
+                      {isAuthenticated ? 'authenticated' : 'local only'}
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => router.push('/login')}
+                    style={{
+                      fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                      padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+                      background: 'rgba(168,255,62,0.08)', border: '1px solid rgba(168,255,62,0.25)',
+                      color: 'var(--physical)',
+                    }}
+                  >
+                    Link phone →
+                  </button>
+                )
               }
             />
             <Row
