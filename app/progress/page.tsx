@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { loadState } from '@/lib/store';
-import type { AppState, DayRecord, Domain, DomainScores, Goal } from '@/lib/types';
+import type { AppState, DayRecord, Domain, DomainScores, Goal, PatternJournalEntry } from '@/lib/types';
 
 const DOMAIN_CONFIG: Record<Domain, { label: string; color: string; hex: string; default: number }> = {
   physical:  { label: 'Physical',  color: 'var(--physical)',  hex: '#a8ff3e', default: 40 },
@@ -290,7 +290,7 @@ export default function ProgressPage() {
     );
   }
 
-  const { domainScores, streak, longestStreak, history = [], goals = [] } = state;
+  const { domainScores, streak, longestStreak, history = [], goals = [], journal = [] } = state;
   const historyMap = buildHistoryMap(history);
   const completions = estimateCompletions(domainScores);
   const totalPatterns = completions.physical + completions.mental + completions.spiritual;
@@ -463,6 +463,41 @@ export default function ProgressPage() {
               >
                 Name a commitment to see how your patterns are driving it →
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pattern Journal */}
+        {journal.length > 0 && (
+          <div className="fade-up fade-up-d4" style={{ marginTop: 20 }}>
+            <div className="panel-title">Pattern Journal</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[...journal].reverse().slice(0, 7).map((entry, i) => {
+                const color = entry.domain === 'physical' ? 'var(--physical)' : entry.domain === 'mental' ? 'var(--mental)' : 'var(--spiritual)';
+                return (
+                  <div key={i} style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    padding: '16px 18px',
+                    borderLeft: `3px solid ${color}`,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{entry.domain}</span>
+                      <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', marginLeft: 'auto' }}>{entry.date}</span>
+                    </div>
+                    <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', marginBottom: 6 }}>
+                      {entry.actionTitle}
+                    </div>
+                    <p style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic', lineHeight: 1.5, marginBottom: 6 }}>
+                      {entry.question}
+                    </p>
+                    <p style={{ fontSize: 13, color: 'var(--text1)', lineHeight: 1.65 }}>
+                      {entry.response}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

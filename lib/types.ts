@@ -105,6 +105,15 @@ export type Task = {
 
 export type SubscriptionPlan = 'free' | 'pro';
 
+export type PatternJournalEntry = {
+  date: string;        // YYYY-MM-DD
+  actionId: string;
+  actionTitle: string;
+  domain: Domain;
+  question: string;    // the Socratic reflection question shown
+  response: string;    // user's written response
+};
+
 export type AppState = {
   profile: UserProfile;
   domainScores: DomainScores;
@@ -117,4 +126,5 @@ export type AppState = {
   goals: Goal[];
   tasks: Task[];
   history: DayRecord[];
+  journal: PatternJournalEntry[];
 };

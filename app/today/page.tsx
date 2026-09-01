@@ -276,9 +276,9 @@ export default function TodayPage() {
     }
   }, [router]);
 
-  const handleComplete = useCallback((actionId: string) => {
+  const handleComplete = useCallback((actionId: string, reflection?: { question: string; response: string }) => {
     const before = loadState();
-    completedAction(actionId);
+    completedAction(actionId, reflection);
     const updated = loadState();
     setState(updated);
     if (shouldShowSavePrompt(updated)) {
@@ -569,6 +569,7 @@ export default function TodayPage() {
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); max-height: 0; } to { opacity: 1; transform: translateY(0); max-height: 400px; } }
       `}</style>
     </AppLayout>
   );

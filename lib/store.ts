@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState, DailyPlan, Domain, DomainScores, Goal, SmsPreferences, Task, TaskDifficulty, UserProfile } from './types';
+import type { AppState, DailyPlan, Domain, DomainScores, Goal, PatternJournalEntry, SmsPreferences, Task, TaskDifficulty, UserProfile } from './types';
 
 const KEY = 'trinitect_state';
 
@@ -49,6 +49,7 @@ const defaultState: AppState = {
   goals: [],
   tasks: [],
   history: [],
+  journal: [],
   currentGoal: {
     id: 'phase0-foundation',
     title: '21-Day Foundation',
@@ -186,7 +187,14 @@ export function deleteTask(taskId: string): void {
   queueSync();
 }
 
-export function completedAction(actionId: string): void {
+export function addJournalEntry(entry: PatternJournalEntry): void {
+  const state = loadState();
+  const journal = [...(state.journal || []), entry].slice(-365); // keep up to 1 year
+  saveState({ ...state, journal });
+  // journal not synced to server yet — stays local only
+}
+
+export function completedAction(actionId: string, reflection?: { question: string; response: string }): void {
   const state = loadState();
   if (!state.todaysPlan) return;
   const actions = state.todaysPlan.actions.map(a =>
@@ -229,6 +237,20 @@ export function completedAction(actionId: string): void {
     }
   }
 
+  const completedAction = state.todaysPlan?.actions.find(a => a.id === actionId);
+  let journal = state.journal || [];
+  if (reflection?.response && completedAction) {
+    const entry: PatternJournalEntry = {
+      date: today,
+      actionId,
+      actionTitle: completedAction.title,
+      domain: completedAction.domain,
+      question: reflection.question,
+      response: reflection.response,
+    };
+    journal = [...journal, entry].slice(-365);
+  }
+
   saveState({
     ...state,
     todaysPlan: updatedPlan,
@@ -237,6 +259,7 @@ export function completedAction(actionId: string): void {
     longestStreak,
     lastActiveDate: allDone ? today : state.lastActiveDate,
     history,
+    journal,
     currentGoal: {
       ...state.currentGoal,
       completedDays: allDone && state.lastActiveDate !== today
