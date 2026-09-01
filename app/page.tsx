@@ -6,9 +6,19 @@ import { loadState, updateProfile, updatePlan } from '@/lib/store';
 import { generateDailyPlan, generatePracticePreview, DRIVER_THEMES } from '@/lib/mock-ai';
 import type { Action } from '@/lib/types';
 
-const DRIVERS = [
-  'Vitality', 'Clarity', 'Mastery', 'Meaning', 'Freedom', 'Connection',
-  'Discipline', 'Creativity', 'Wisdom', 'Impact', 'Growth', 'Peace',
+const DRIVERS: { name: string; desc: string }[] = [
+  { name: 'Vitality',    desc: 'Energy & health'     },
+  { name: 'Clarity',     desc: 'Focused mind'         },
+  { name: 'Mastery',     desc: 'Build expertise'      },
+  { name: 'Meaning',     desc: 'Live with purpose'    },
+  { name: 'Freedom',     desc: 'Own your time'        },
+  { name: 'Connection',  desc: 'Real relationships'   },
+  { name: 'Discipline',  desc: 'Show up daily'        },
+  { name: 'Creativity',  desc: 'Express & create'     },
+  { name: 'Wisdom',      desc: 'Learn & reflect'      },
+  { name: 'Impact',      desc: 'Move things forward'  },
+  { name: 'Growth',      desc: 'Become more'          },
+  { name: 'Peace',       desc: 'Inner calm'           },
 ];
 
 const DOMAIN_COLOR: Record<string, string> = {
@@ -40,9 +50,9 @@ export default function Onboarding() {
 
   if (!mounted) return null;
 
-  function toggleDriver(d: string) {
+  function toggleDriver(name: string) {
     setSelectedDrivers(prev =>
-      prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d].slice(0, 6)
+      prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name].slice(0, 6)
     );
   }
 
@@ -52,7 +62,7 @@ export default function Onboarding() {
   const stepIdx = steps.indexOf(step);
   const progress = stepIdx <= 0 ? 0 : (stepIdx / (steps.length - 1)) * 100;
 
-  function handleAccount() {
+  function saveAndProceed(skipAccount: boolean) {
     const profile = {
       name: firstName.trim() || 'Friend',
       lastName: lastName.trim(),
@@ -60,6 +70,7 @@ export default function Onboarding() {
       phone: phone.replace(/\D/g, '').length === 10
         ? `+1${phone.replace(/\D/g, '')}`
         : phone.trim() || undefined,
+      phoneSkipped: skipAccount,
       values: selectedDrivers,
       primaryGoal: declaration.trim(),
       energyLevel: 3,
@@ -109,17 +120,32 @@ export default function Onboarding() {
               style={{ marginBottom: 24 }}
             />
 
-            <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 14 }}>
-              When you drift — what pulls you back? Pick up to 6.
-            </p>
-            <div className="values-grid">
-              {DRIVERS.map(d => (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                When you drift — what pulls you back?
+              </p>
+              <span style={{
+                fontSize: 10, fontFamily: 'var(--font-mono)',
+                color: selectedDrivers.length > 0 ? 'var(--physical)' : 'var(--text4)',
+                transition: 'color 0.2s',
+              }}>
+                {selectedDrivers.length}/6
+              </span>
+            </div>
+
+            <div className="values-grid" style={{ marginBottom: 32 }}>
+              {DRIVERS.map(({ name, desc }) => (
                 <button
-                  key={d}
-                  className={`value-chip ${selectedDrivers.includes(d) ? 'selected' : ''}`}
-                  onClick={() => toggleDriver(d)}
+                  key={name}
+                  className={`value-chip ${selectedDrivers.includes(name) ? 'selected' : ''}`}
+                  onClick={() => toggleDriver(name)}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '12px 8px' }}
                 >
-                  {d}
+                  <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1 }}>{name}</span>
+                  <span style={{
+                    fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
+                    opacity: 0.6, lineHeight: 1,
+                  }}>{desc}</span>
                 </button>
               ))}
             </div>
@@ -192,6 +218,18 @@ export default function Onboarding() {
               >
                 Show me the patterns first
               </button>
+              <button
+                onClick={() => setStep('drivers')}
+                style={{
+                  background: 'none', border: 'none',
+                  color: 'var(--text4)', cursor: 'pointer',
+                  fontSize: 11, fontFamily: 'var(--font-mono)',
+                  padding: '6px 0', letterSpacing: '0.06em',
+                  textAlign: 'center',
+                }}
+              >
+                ← edit my drivers
+              </button>
             </div>
           </div>
         )}
@@ -199,6 +237,24 @@ export default function Onboarding() {
         {/* ── Step: Declaration (Path A) ── */}
         {step === 'declaration' && (
           <div className="fade-up">
+            {/* Driver context chips */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+              {selectedDrivers.map(d => (
+                <span key={d} style={{
+                  padding: '4px 12px',
+                  background: 'rgba(168,255,62,0.06)',
+                  border: '1px solid rgba(168,255,62,0.15)',
+                  borderRadius: 20,
+                  fontSize: 11, fontWeight: 500,
+                  color: 'var(--physical)',
+                  fontFamily: 'var(--font-mono)',
+                  opacity: 0.75,
+                }}>
+                  {d}
+                </span>
+              ))}
+            </div>
+
             <h1 className="onboard-heading" style={{ fontSize: 26, marginBottom: 12 }}>
               What would you commit to —<br />before you know how?
             </h1>
@@ -221,10 +277,16 @@ export default function Onboarding() {
                 fontSize: 17, fontFamily: 'var(--font-display)', fontWeight: 600,
                 outline: 'none', resize: 'none', lineHeight: 1.5,
                 marginBottom: 8,
-                transition: 'border-color var(--transition)',
+                transition: 'border-color var(--transition), box-shadow var(--transition)',
               }}
-              onFocus={e => e.target.style.borderColor = 'rgba(168,255,62,0.4)'}
-              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              onFocus={e => {
+                e.target.style.borderColor = 'rgba(168,255,62,0.5)';
+                e.target.style.boxShadow = '0 0 0 3px rgba(168,255,62,0.07)';
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = 'var(--border)';
+                e.target.style.boxShadow = 'none';
+              }}
             />
             <p style={{ fontSize: 11, color: 'var(--text4)', fontFamily: 'var(--font-mono)', marginBottom: 28, letterSpacing: '0.06em' }}>
               You don't need the plan yet. Just the yes.
@@ -245,6 +307,7 @@ export default function Onboarding() {
                   color: 'var(--text4)', cursor: 'pointer',
                   fontSize: 11, fontFamily: 'var(--font-mono)',
                   padding: '8px 0', letterSpacing: '0.06em',
+                  textAlign: 'center',
                 }}
               >
                 ← back
@@ -286,7 +349,7 @@ export default function Onboarding() {
               </>
             )}
 
-            <div style={{ display: 'flex', gap: 10, marginBottom: 0 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <input
                 className="text-input"
                 style={{ marginBottom: 12, flex: 1 }}
@@ -311,7 +374,7 @@ export default function Onboarding() {
             />
             <input
               className="text-input"
-              placeholder="Phone number (optional — for reminders)"
+              placeholder="Phone (optional — for reminders)"
               type="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
@@ -319,13 +382,13 @@ export default function Onboarding() {
 
             <button
               className="primary-btn"
-              onClick={handleAccount}
+              onClick={() => saveAndProceed(false)}
               disabled={!email.trim()}
             >
               Create my account →
             </button>
             <button
-              onClick={handleAccount}
+              onClick={() => saveAndProceed(true)}
               style={{
                 width: '100%', background: 'none', border: 'none',
                 color: 'var(--text4)', cursor: 'pointer',
@@ -335,6 +398,18 @@ export default function Onboarding() {
               }}
             >
               I'll do this later →
+            </button>
+            <button
+              onClick={() => setStep(path === 'declared' ? 'declaration' : 'reflection')}
+              style={{
+                width: '100%', background: 'none', border: 'none',
+                color: 'var(--text4)', cursor: 'pointer',
+                fontSize: 11, fontFamily: 'var(--font-mono)',
+                padding: '4px 0 8px', letterSpacing: '0.06em',
+                textAlign: 'center',
+              }}
+            >
+              ← back
             </button>
           </div>
         )}
@@ -349,8 +424,11 @@ export default function Onboarding() {
               Three domains.<br />One practice.
             </h1>
             <p className="onboard-sub" style={{ marginBottom: 24 }}>
-              Built around{' '}
-              {selectedDrivers.slice(0, 2).join(' and ')}.{' '}
+              Matched to{' '}
+              <span style={{ color: 'var(--physical)', fontWeight: 600 }}>
+                {selectedDrivers.slice(0, 2).join(' & ')}
+              </span>
+              {selectedDrivers.length > 2 ? ` and ${selectedDrivers.length - 2} more` : ''}.{' '}
               {practiceActions.reduce((s, a) => s + a.duration, 0)} minutes total.
             </p>
 
