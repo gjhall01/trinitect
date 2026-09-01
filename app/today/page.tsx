@@ -189,7 +189,7 @@ export default function TodayPage() {
 
         {/* Toasts */}
         {showUpgradeToast && (
-          <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid rgba(168,255,62,0.4)', borderRadius: 40, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, zIndex: 600, animation: 'fadeUp 0.3s ease both', boxShadow: '0 8px 40px rgba(168,255,62,0.15)', whiteSpace: 'nowrap' }}>
+          <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid rgba(168,255,62,0.4)', borderRadius: 40, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, zIndex: 600, animation: 'toastIn 0.3s ease both', boxShadow: '0 8px 40px rgba(168,255,62,0.15)', whiteSpace: 'nowrap' }}>
             <span style={{ fontSize: 18 }}>✦</span>
             <div>
               <div style={{ fontSize: 13, color: 'var(--physical)', fontWeight: 700, fontFamily: 'var(--font-display)' }}>Welcome to Trinitect Pro</div>
@@ -198,7 +198,7 @@ export default function TodayPage() {
           </div>
         )}
         {showSavedToast && (
-          <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid rgba(168,255,62,0.3)', borderRadius: 40, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 600, animation: 'fadeUp 0.3s ease both', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
+          <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid rgba(168,255,62,0.3)', borderRadius: 40, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 600, animation: 'toastIn 0.3s ease both', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
             <span style={{ color: 'var(--physical)', fontSize: 15 }}>✓</span>
             <span style={{ fontSize: 13, color: 'var(--text1)', fontWeight: 500 }}>Progress saved</span>
           </div>
@@ -331,7 +331,7 @@ export default function TodayPage() {
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
       `}</style>
     </AppLayout>
   );
