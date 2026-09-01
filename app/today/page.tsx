@@ -727,7 +727,7 @@ export default function TodayPage() {
               const badge = explainPattern(action, goals);
               return (
                 <div key={action.id} className={`fade-up fade-up-d${i + 1}`}>
-                  <ActionCard action={action} onComplete={handleComplete} onSwap={handleSwap} goalBadge={badge ?? undefined} />
+                  <ActionCard action={action} onComplete={handleComplete} onSwap={handleSwap} goalBadge={badge ?? undefined} drivers={profile.values || []} />
                 </div>
               );
             })}

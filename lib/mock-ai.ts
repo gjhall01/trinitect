@@ -373,3 +373,98 @@ export function getReplacementSuggestions(trigger: string): string[] {
   }
   return ['5-min movement', '3 deep breaths', 'Write what you actually need right now', 'Values check-in'];
 }
+
+// ── Personalized "why this for you" explanation ───────────────────────────────
+// Connects the action's themes to the user's specific drivers.
+// Returns a 1-sentence insight, or null if no overlap found.
+
+const THEME_DRIVER_COPY: Partial<Record<PatternTheme, Partial<Record<string, string>>>> = {
+  focus: {
+    Mastery:    'Focus sessions are how expertise compounds — this is Mastery in practice.',
+    Clarity:    'Single-task focus is the foundation of the mental clarity you\'re building.',
+    Discipline: 'Focused blocks are discipline in its most concrete form.',
+    Freedom:    'Protected focus time is how you reclaim your calendar from distraction.',
+  },
+  discipline: {
+    Discipline: 'Discipline is doing it when you don\'t feel like it. That\'s today.',
+    Mastery:    'Consistent practice is how mastery accumulates — one session at a time.',
+    Growth:     'Growth happens in the daily reps nobody sees. This is one of them.',
+    Impact:     'Sustainable impact runs on discipline, not motivation.',
+  },
+  energy: {
+    Vitality:   'This directly builds the physical vitality you named.',
+    Growth:     'Physical energy is infrastructure — everything runs better when this is strong.',
+    Discipline: 'High energy makes discipline effortless. This is the foundation.',
+  },
+  resilience: {
+    Discipline: 'Resilience is discipline\'s foundation — this builds both.',
+    Vitality:   'Physical resilience compounds. Each session raises your baseline.',
+    Growth:     'Stress + recovery is the growth equation. This is the recovery side.',
+  },
+  purpose: {
+    Meaning:    'This connects to your why — the source of meaning you named.',
+    Wisdom:     'Reflection and purpose compound together. This builds both.',
+    Impact:     'Clarity of purpose is what makes impact sustainable.',
+    Growth:     'Growth without purpose is just motion. This pattern anchors the direction.',
+  },
+  clarity: {
+    Clarity:    'Mental clarity is your core driver — this removes the noise.',
+    Freedom:    'Clear thinking is how you reclaim your time and attention.',
+    Wisdom:     'Wisdom requires clarity first. This creates the space for it.',
+    Mastery:    'Clarity lets you work on what matters most — a prerequisite for Mastery.',
+  },
+  identity: {
+    Mastery:    'Each rep builds the identity of someone who does this. That\'s Mastery.',
+    Growth:     'Identity is built in the daily choices. This is one of them.',
+    Discipline: 'Discipline is an identity, not just a behavior. This reinforces it.',
+    Creativity: 'Creative identity is built in the practice, not the inspiration.',
+  },
+  connection: {
+    Connection: 'Relationships compound just like patterns do. This is relational investment.',
+    Impact:     'The relationships you invest in amplify everything else you\'re building.',
+  },
+  regulation: {
+    Peace:      'Regulation is how peace becomes accessible under pressure.',
+    Vitality:   'A regulated nervous system is the foundation of physical vitality.',
+    Freedom:    'Stress regulation is how you reclaim energy and mental bandwidth.',
+  },
+  trust: {
+    Peace:      'Trust is how anxiety releases. This pattern builds that capacity.',
+    Meaning:    'Meaning requires trusting that your effort compounds. This reinforces both.',
+    Connection: 'Trust is what transforms relationships from surface-level to real.',
+  },
+  gratitude: {
+    Connection: 'Gratitude deepens connection — it\'s the foundation of real relationships.',
+    Peace:      'Gratitude is the most direct path to the peace you\'re building.',
+    Meaning:    'Noticing what\'s real is how meaning becomes visible.',
+  },
+  forgiveness: {
+    Peace:      'Forgiveness is the fastest way to free up the bandwidth peace requires.',
+    Freedom:    'Resentment costs energy. This releases it.',
+  },
+  avoidance: {
+    Freedom:    'Breaking avoidance is how you reclaim your time and energy.',
+    Clarity:    'Avoidance is clarity\'s enemy. This pattern breaks the loop.',
+    Discipline: 'Avoidance is what discipline is trained to override.',
+  },
+};
+
+export function getPersonalizedExplanation(
+  action: Action,
+  drivers: string[],
+): { driver: string; text: string } | null {
+  const actionThemes = action.themes || [];
+  if (actionThemes.length === 0 || drivers.length === 0) return null;
+
+  for (const driver of drivers) {
+    const driverThemes = DRIVER_THEMES[driver] || [];
+    for (const theme of actionThemes) {
+      if (driverThemes.includes(theme)) {
+        const copy = THEME_DRIVER_COPY[theme]?.[driver]
+          ?? THEME_DRIVER_COPY[theme]?.[Object.keys(THEME_DRIVER_COPY[theme] || {})[0]];
+        if (copy) return { driver, text: copy };
+      }
+    }
+  }
+  return null;
+}

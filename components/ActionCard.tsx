@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { Action } from '@/lib/types';
+import { getPersonalizedExplanation } from '@/lib/mock-ai';
 
 const DOMAIN_COLOR: Record<string, string> = {
   physical:  'var(--physical)',
@@ -92,11 +93,13 @@ export default function ActionCard({
   onComplete,
   onSwap,
   goalBadge,
+  drivers,
 }: {
   action: Action;
   onComplete: (id: string, reflection?: { question: string; response: string }) => void;
   onSwap?: (id: string, alternative: Alternative) => void;
   goalBadge?: { goalTitle: string; matchedThemes: string[] };
+  drivers?: string[];
 }) {
   const [showWhy, setShowWhy] = useState(false);
   const [showReflect, setShowReflect] = useState(false);
@@ -105,6 +108,7 @@ export default function ActionCard({
   const [completing, setCompleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const color = DOMAIN_COLOR[action.domain] || 'var(--physical)';
+  const driverInsight = drivers && drivers.length > 0 ? getPersonalizedExplanation(action, drivers) : null;
 
   useEffect(() => {
     if (showReflect && textareaRef.current) {
@@ -208,11 +212,23 @@ export default function ActionCard({
             borderLeft: `2px solid ${color}50`,
             animation: 'fadeIn 0.18s ease both',
           }}>
+            {driverInsight && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                  For your {driverInsight.driver} driver
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.6 }}>
+                  {driverInsight.text}
+                </p>
+              </div>
+            )}
             {action.reflection && (
               <p style={{
                 fontSize: 12, color: 'var(--text1)',
                 fontStyle: 'italic', lineHeight: 1.6,
                 marginBottom: 10,
+                borderTop: driverInsight ? '1px solid var(--border)' : 'none',
+                paddingTop: driverInsight ? 8 : 0,
               }}>
                 {action.reflection}
               </p>
@@ -220,8 +236,8 @@ export default function ActionCard({
             <p style={{
               fontSize: 10, color: 'var(--text3)',
               fontFamily: 'var(--font-mono)', lineHeight: 1.5,
-              borderTop: action.reflection ? '1px solid var(--border)' : 'none',
-              paddingTop: action.reflection ? 8 : 0,
+              borderTop: action.reflection || driverInsight ? '1px solid var(--border)' : 'none',
+              paddingTop: action.reflection || driverInsight ? 8 : 0,
             }}>
               {action.benefit}
             </p>
