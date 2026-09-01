@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import ActionCard from '@/components/ActionCard';
 import SaveProgressModal from '@/components/SaveProgressModal';
-import { loadState, completedAction, updatePlan } from '@/lib/store';
+import { loadState, completedAction, updatePlan, updateProfile } from '@/lib/store';
 import { generateDailyPlan, explainPattern, getReplacementSuggestions } from '@/lib/mock-ai';
 import type { AppState, Action, Goal, Task } from '@/lib/types';
 
@@ -27,15 +27,143 @@ function shouldShowSavePrompt(s: AppState): boolean {
   return (s.todaysPlan?.actions.filter(a => a.completed).length ?? 0) >= 1;
 }
 
+// Inline declaration form — the $800 moment triggered by streak consistency
+function CommitmentMoment({ streak, drivers, onDeclare }: {
+  streak: number;
+  drivers: string[];
+  onDeclare: (text: string) => void;
+}) {
+  const [text, setText] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  function handleSubmit() {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onDeclare(trimmed);
+    setSaved(true);
+  }
+
+  if (saved) {
+    return (
+      <div style={{
+        background: 'rgba(168,255,62,0.06)',
+        border: '1px solid rgba(168,255,62,0.25)',
+        borderRadius: 'var(--radius)',
+        padding: '20px 22px',
+        animation: 'fadeIn 0.4s ease both',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 22, marginBottom: 10 }}>✦</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--physical)', marginBottom: 6 }}>
+          That's the one.
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6 }}>
+          You're not looking back. Come back tomorrow and keep building.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      background: 'rgba(212,160,255,0.04)',
+      border: '1px solid rgba(212,160,255,0.18)',
+      borderRadius: 'var(--radius)',
+      padding: '20px 22px',
+      animation: 'fadeIn 0.4s ease both',
+    }}>
+      <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--spiritual)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
+        {streak} days straight
+      </div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text1)', marginBottom: 6, letterSpacing: '-0.02em', lineHeight: 1.3 }}>
+        The pattern is real.<br />What is it for?
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.6, marginBottom: 16 }}>
+        You've shown up {streak} days. That's not motivation — that's character. Now give it a direction.
+      </div>
+
+      {drivers.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
+          {drivers.map(d => (
+            <span key={d} style={{
+              padding: '3px 9px',
+              background: 'rgba(212,160,255,0.07)',
+              border: '1px solid rgba(212,160,255,0.15)',
+              borderRadius: 20,
+              fontSize: 9, fontFamily: 'var(--font-mono)',
+              color: 'rgba(212,160,255,0.65)',
+            }}>
+              {d}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <textarea
+        autoFocus
+        value={text}
+        onChange={e => setText(e.target.value)}
+        placeholder={`e.g. "Prove I can finish what I start." "Run a marathon." "Earn the promotion."`}
+        style={{
+          width: '100%', minHeight: 90,
+          background: 'var(--surface2)',
+          border: '1.5px solid var(--border)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '12px 14px',
+          color: 'var(--text1)',
+          fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 600,
+          outline: 'none', resize: 'none', lineHeight: 1.5,
+          marginBottom: 12,
+          transition: 'border-color var(--transition), box-shadow var(--transition)',
+        }}
+        onFocus={e => {
+          e.target.style.borderColor = 'rgba(212,160,255,0.45)';
+          e.target.style.boxShadow = '0 0 0 3px rgba(212,160,255,0.06)';
+        }}
+        onBlur={e => {
+          e.target.style.borderColor = 'var(--border)';
+          e.target.style.boxShadow = 'none';
+        }}
+        onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit(); }}
+      />
+
+      <button
+        onClick={handleSubmit}
+        disabled={!text.trim()}
+        style={{
+          width: '100%',
+          background: text.trim() ? 'var(--spiritual)' : 'var(--surface3)',
+          border: 'none', borderRadius: 'var(--radius-sm)',
+          padding: '12px 18px', cursor: text.trim() ? 'pointer' : 'not-allowed',
+          fontSize: 13, fontFamily: 'var(--font-display)', fontWeight: 700,
+          color: text.trim() ? 'var(--bg)' : 'var(--text4)',
+          transition: 'all 0.2s',
+          letterSpacing: '-0.01em',
+        }}
+      >
+        I'm not looking back →
+      </button>
+    </div>
+  );
+}
+
 // The intelligent next step shown after all 3 patterns are done
-function NextStep({ goals, tasks, streak, router }: {
+function NextStep({ goals, tasks, streak, commitment, drivers, onDeclare, router }: {
   goals: Goal[];
   tasks: Task[];
   streak: number;
+  commitment?: string;
+  drivers: string[];
+  onDeclare: (text: string) => void;
   router: ReturnType<typeof useRouter>;
 }) {
   const activeGoals = goals.filter(g => !g.archived);
   const openMoves = tasks.filter(t => !t.completed);
+
+  // Streak ≥ 10 with no declaration → inline commitment moment (highest nudge priority)
+  if (!commitment && streak >= 10 && activeGoals.length === 0) {
+    return <CommitmentMoment streak={streak} drivers={drivers} onDeclare={onDeclare} />;
+  }
 
   let headline = '';
   let body = '';
@@ -176,6 +304,12 @@ export default function TodayPage() {
     );
   }
 
+  const handleDeclare = useCallback((text: string) => {
+    const s = loadState();
+    updateProfile({ ...s.profile, commitmentDeclaration: text, notLookingBack: true });
+    setState(loadState());
+  }, []);
+
   const { profile, todaysPlan, streak, goals = [], tasks = [] } = state;
   const actions: Action[] = todaysPlan?.actions ?? [];
   const completedCount = actions.filter(a => a.completed).length;
@@ -279,7 +413,15 @@ export default function TodayPage() {
         {/* Intelligent next step (post-completion) */}
         {allDone && (
           <div className="fade-up fade-up-d3" style={{ marginBottom: 16 }}>
-            <NextStep goals={goals} tasks={tasks} streak={streak} router={router} />
+            <NextStep
+              goals={goals}
+              tasks={tasks}
+              streak={streak}
+              commitment={profile.commitmentDeclaration}
+              drivers={profile.values || []}
+              onDeclare={handleDeclare}
+              router={router}
+            />
           </div>
         )}
 
