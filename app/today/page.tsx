@@ -471,6 +471,39 @@ export default function TodayPage() {
           </div>
         )}
 
+        {/* Wins so far — appears as patterns are completed */}
+        {completedCount > 0 && !allDone && (
+          <div style={{ marginBottom: 16, animation: 'fadeIn 0.4s ease both' }}>
+            <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text4)', marginBottom: 8 }}>
+              What you built
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {actions.filter(a => a.completed).map(a => {
+                const c = a.domain === 'physical' ? 'var(--physical)' : a.domain === 'mental' ? 'var(--mental)' : 'var(--spiritual)';
+                return (
+                  <div key={a.id} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                    padding: '10px 14px',
+                    background: 'var(--surface)',
+                    border: `1px solid ${c}18`,
+                    borderLeft: `2px solid ${c}`,
+                    borderRadius: 'var(--radius-sm)',
+                    animation: 'fadeIn 0.3s ease both',
+                  }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <div>
+                      <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: c, letterSpacing: '0.04em', marginBottom: 2 }}>{a.title}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>{a.benefit}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Pattern cards */}
         <div className="fade-up fade-up-d2" style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text4)', marginBottom: 12 }}>
