@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { verifyOTP, findOrCreateUser, getUser, signToken } from '@/lib/auth-server';
 
+const THIRTY_DAYS = 60 * 60 * 24 * 30;
+
 export async function POST(req: Request) {
   try {
     const { phone, otp } = await req.json() as { phone?: string; otp?: string };
@@ -18,7 +20,15 @@ export async function POST(req: Request) {
     const user = await getUser(userId);
     const token = signToken(userId, phone);
 
-    return NextResponse.json({ token, user });
+    const res = NextResponse.json({ token, user });
+    res.cookies.set('trinitect_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: THIRTY_DAYS,
+      path: '/',
+    });
+    return res;
   } catch (err) {
     console.error('verify-otp error', err);
     return NextResponse.json({ error: 'Verification failed. Please try again.' }, { status: 500 });

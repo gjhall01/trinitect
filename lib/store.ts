@@ -4,6 +4,34 @@ import type { AppState, DailyPlan, Domain, DomainScores, Goal, SmsPreferences, T
 
 const KEY = 'trinitect_state';
 
+// ── Server sync (fire-and-forget, debounced) ──────────────────────────────────
+
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+
+function queueSync(): void {
+  if (typeof window === 'undefined') return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      const { syncState } = await import('./api-client');
+      const s = loadState();
+      await syncState({
+        profile: s.profile,
+        domainScores: s.domainScores,
+        streak: s.streak,
+        longestStreak: s.longestStreak,
+        lastActiveDate: s.lastActiveDate,
+        goals: s.goals,
+        tasks: s.tasks,
+        history: s.history,
+        todaysPlan: s.todaysPlan,
+      });
+    } catch {
+      // Sync failure is non-fatal — data is safe in localStorage
+    }
+  }, 1500);
+}
+
 const defaultState: AppState = {
   profile: {
     name: '',
@@ -49,6 +77,7 @@ export function saveState(state: AppState): void {
 export function updateProfile(profile: UserProfile): void {
   const state = loadState();
   saveState({ ...state, profile });
+  queueSync();
 }
 
 export function updatePlan(plan: DailyPlan): void {
@@ -74,12 +103,14 @@ export function addGoal(goalData: Omit<Goal, 'id' | 'createdAt'>): void {
     createdAt: new Date().toISOString().split('T')[0],
   };
   saveState({ ...state, goals: [...(state.goals || []), newGoal] });
+  queueSync();
 }
 
 export function updateGoal(goal: Goal): void {
   const state = loadState();
   const goals = (state.goals || []).map(g => g.id === goal.id ? goal : g);
   saveState({ ...state, goals });
+  queueSync();
 }
 
 export function toggleMilestone(goalId: string, milestoneId: string): void {
@@ -94,6 +125,7 @@ export function toggleMilestone(goalId: string, milestoneId: string): void {
     };
   });
   saveState({ ...state, goals });
+  queueSync();
 }
 
 export function archiveGoal(goalId: string): void {
@@ -102,6 +134,7 @@ export function archiveGoal(goalId: string): void {
     g.id === goalId ? { ...g, archived: true } : g
   );
   saveState({ ...state, goals });
+  queueSync();
 }
 
 export function restoreGoal(goalId: string): void {
@@ -110,6 +143,7 @@ export function restoreGoal(goalId: string): void {
     g.id === goalId ? { ...g, archived: false } : g
   );
   saveState({ ...state, goals });
+  queueSync();
 }
 
 export function addTask(goalId: string, title: string): void {
@@ -122,6 +156,7 @@ export function addTask(goalId: string, title: string): void {
     createdAt: new Date().toISOString().split('T')[0],
   };
   saveState({ ...state, tasks: [...(state.tasks || []), newTask] });
+  queueSync();
 }
 
 export function completeTask(taskId: string, difficulty: TaskDifficulty): void {
@@ -132,6 +167,7 @@ export function completeTask(taskId: string, difficulty: TaskDifficulty): void {
       : t
   );
   saveState({ ...state, tasks });
+  queueSync();
 }
 
 export function reopenTask(taskId: string): void {
@@ -140,12 +176,14 @@ export function reopenTask(taskId: string): void {
     t.id === taskId ? { ...t, completed: false, completedAt: undefined, difficulty: undefined } : t
   );
   saveState({ ...state, tasks });
+  queueSync();
 }
 
 export function deleteTask(taskId: string): void {
   const state = loadState();
   const tasks = (state.tasks || []).filter(t => t.id !== taskId);
   saveState({ ...state, tasks });
+  queueSync();
 }
 
 export function completedAction(actionId: string): void {
@@ -206,4 +244,32 @@ export function completedAction(actionId: string): void {
         : state.currentGoal.completedDays,
     },
   });
+  queueSync();
+}
+
+// ── Server state hydration ────────────────────────────────────────────────────
+
+export async function hydrateFromServer(): Promise<void> {
+  try {
+    const { getMe } = await import('./api-client');
+    const { user } = await getMe();
+    if (!user) return;
+    const local = loadState();
+    // Server wins for profile/streak/goals; merge rather than replace
+    const merged: AppState = {
+      ...local,
+      profile: user.profile ?? local.profile,
+      domainScores: user.domainScores ?? local.domainScores,
+      streak: user.streak ?? local.streak,
+      longestStreak: user.longestStreak ?? local.longestStreak,
+      lastActiveDate: user.lastActiveDate ?? local.lastActiveDate,
+      goals: user.goals ?? local.goals ?? [],
+      tasks: user.tasks ?? local.tasks ?? [],
+      history: user.history ?? local.history ?? [],
+      todaysPlan: user.todaysPlan ?? local.todaysPlan,
+    };
+    saveState(merged);
+  } catch {
+    // Not authenticated or offline — use localStorage
+  }
 }

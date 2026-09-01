@@ -24,7 +24,7 @@ export async function PUT(req: Request) {
   try {
     const body = await req.json() as Record<string, unknown>;
     // Only allow known top-level fields to be updated
-    const allowed = ['profile', 'domainScores', 'todaysPlan', 'streak', 'longestStreak', 'lastActiveDate', 'currentGoal'];
+    const allowed = ['profile', 'domainScores', 'todaysPlan', 'streak', 'longestStreak', 'lastActiveDate', 'currentGoal', 'goals', 'tasks', 'history', 'subscriptionPlan'];
     const updates = Object.fromEntries(
       Object.entries(body).filter(([k]) => allowed.includes(k))
     );

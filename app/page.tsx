@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadState, updateProfile, updatePlan } from '@/lib/store';
 import { generateDailyPlan, generatePracticePreview, DRIVER_THEMES } from '@/lib/mock-ai';
+import { requestOTP, verifyOTP as apiVerifyOTP, setToken } from '@/lib/api-client';
 import type { Action } from '@/lib/types';
 
 const DRIVERS: { name: string; desc: string }[] = [
@@ -41,6 +42,11 @@ export default function Onboarding() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [practiceActions, setPracticeActions] = useState<Action[]>([]);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -48,7 +54,52 @@ export default function Onboarding() {
     if (s.profile.onboarded) router.replace('/today');
   }, [router]);
 
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const t = setTimeout(() => setResendCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCountdown]);
+
   if (!mounted) return null;
+
+  function formatPhone(raw: string): string {
+    const digits = raw.replace(/\D/g, '').slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  function e164(formatted: string): string {
+    const digits = formatted.replace(/\D/g, '');
+    return digits.length === 10 ? `+1${digits}` : '';
+  }
+  async function handleSendCode() {
+    const e164Phone = e164(phone);
+    if (!e164Phone) { setOtpError('Enter a valid 10-digit US number.'); return; }
+    setOtpLoading(true); setOtpError('');
+    try {
+      await requestOTP(e164Phone);
+      setOtpSent(true);
+      setResendCountdown(30);
+    } catch (err) {
+      setOtpError(err instanceof Error ? err.message : 'Failed to send code.');
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+  async function handleVerifyAndProceed() {
+    if (otp.length !== 6) { setOtpError('Enter the 6-digit code.'); return; }
+    setOtpLoading(true); setOtpError('');
+    try {
+      const e164Phone = e164(phone);
+      const { token } = await apiVerifyOTP(e164Phone, otp);
+      setToken(token as string);
+      saveAndProceed(false);
+    } catch (err) {
+      setOtpError(err instanceof Error ? err.message : 'Incorrect code.');
+    } finally {
+      setOtpLoading(false);
+    }
+  }
 
   function toggleDriver(name: string) {
     setSelectedDrivers(prev =>
@@ -320,97 +371,94 @@ export default function Onboarding() {
         {step === 'account' && (
           <div className="fade-up">
             {path === 'declared' && declaration ? (
+              <div style={{ background: 'rgba(168,255,62,0.05)', border: '1px solid rgba(168,255,62,0.18)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 22 }}>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--physical)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>Your commitment</div>
+                <div style={{ fontSize: 15, fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text1)', lineHeight: 1.4 }}>"{declaration}"</div>
+              </div>
+            ) : null}
+
+            {!otpSent ? (
               <>
-                <div style={{
-                  background: 'rgba(168,255,62,0.05)',
-                  border: '1px solid rgba(168,255,62,0.18)',
-                  borderRadius: 'var(--radius)',
-                  padding: '16px 20px',
-                  marginBottom: 24,
-                }}>
-                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--physical)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
-                    Your commitment
-                  </div>
-                  <div style={{ fontSize: 16, fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text1)', lineHeight: 1.4 }}>
-                    "{declaration}"
-                  </div>
-                </div>
-                <h1 className="onboard-heading" style={{ fontSize: 24, marginBottom: 8 }}>Let's protect it.</h1>
+                <h1 className="onboard-heading" style={{ fontSize: 24, marginBottom: 8 }}>
+                  {path === 'declared' ? "Let's protect it." : 'Save your foundation.'}
+                </h1>
                 <p className="onboard-sub" style={{ marginBottom: 28 }}>
-                  Create your free account. Your commitment and drivers are yours to keep.
+                  Enter your first name and phone — we'll send a code to verify and create your account.
                 </p>
+
+                <input
+                  className="text-input"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                />
+                <input
+                  className="text-input"
+                  type="tel"
+                  placeholder="(555) 000-0000"
+                  value={phone}
+                  onChange={e => { setPhone(formatPhone(e.target.value)); setOtpError(''); }}
+                  style={{ fontSize: 18, letterSpacing: '0.04em' }}
+                />
+
+                {otpError && <div style={{ fontSize: 11, color: '#ff8c69', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>{otpError}</div>}
+
+                <button
+                  className="primary-btn"
+                  disabled={otpLoading || e164(phone).length !== 12}
+                  onClick={handleSendCode}
+                >
+                  {otpLoading ? 'Sending…' : 'Send code →'}
+                </button>
+                <button
+                  onClick={() => saveAndProceed(true)}
+                  style={{ width: '100%', background: 'none', border: 'none', color: 'var(--text4)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', padding: '12px 0', letterSpacing: '0.06em', textAlign: 'center' }}
+                >
+                  I'll do this later →
+                </button>
+                <button
+                  onClick={() => setStep(path === 'declared' ? 'declaration' : 'reflection')}
+                  style={{ width: '100%', background: 'none', border: 'none', color: 'var(--text4)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', padding: '4px 0 8px', letterSpacing: '0.06em', textAlign: 'center' }}
+                >
+                  ← back
+                </button>
               </>
             ) : (
               <>
-                <h1 className="onboard-heading" style={{ fontSize: 24, marginBottom: 8 }}>Save your foundation.</h1>
-                <p className="onboard-sub" style={{ marginBottom: 28 }}>
-                  Create your free account. Your drivers and progress will be waiting every time you return.
-                </p>
+                <button onClick={() => { setOtpSent(false); setOtp(''); setOtpError(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>← Change number</button>
+                <h1 className="onboard-heading" style={{ fontSize: 24, marginBottom: 8 }}>Check your phone.</h1>
+                <p className="onboard-sub" style={{ marginBottom: 6 }}>We sent a 6-digit code to</p>
+                <p style={{ fontSize: 14, color: 'var(--physical)', fontFamily: 'var(--font-mono)', fontWeight: 600, marginBottom: 28 }}>{phone}</p>
+
+                <input
+                  className="text-input"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  placeholder="——————"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setOtpError(''); }}
+                  style={{ fontSize: 24, letterSpacing: '0.3em', textAlign: 'center', fontFamily: 'var(--font-mono)' }}
+                  autoFocus
+                />
+
+                {otpError && <div style={{ fontSize: 11, color: '#ff8c69', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>{otpError}</div>}
+
+                <button className="primary-btn" disabled={otpLoading || otp.length !== 6} onClick={handleVerifyAndProceed}>
+                  {otpLoading ? 'Verifying…' : 'Verify & start →'}
+                </button>
+                <div style={{ textAlign: 'center', marginTop: 14 }}>
+                  <button
+                    onClick={() => { if (resendCountdown > 0) return; setOtp(''); handleSendCode(); }}
+                    disabled={resendCountdown > 0}
+                    style={{ background: 'none', border: 'none', cursor: resendCountdown > 0 ? 'default' : 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: resendCountdown > 0 ? 'var(--text4)' : 'var(--mental)', letterSpacing: '0.06em' }}
+                  >
+                    {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend code'}
+                  </button>
+                </div>
               </>
             )}
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <input
-                className="text-input"
-                style={{ marginBottom: 12, flex: 1 }}
-                placeholder="First name"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-              />
-              <input
-                className="text-input"
-                style={{ marginBottom: 12, flex: 1 }}
-                placeholder="Last name"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-              />
-            </div>
-            <input
-              className="text-input"
-              placeholder="Email address"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-            <input
-              className="text-input"
-              placeholder="Phone (optional — for reminders)"
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-            />
-
-            <button
-              className="primary-btn"
-              onClick={() => saveAndProceed(false)}
-              disabled={!email.trim()}
-            >
-              Create my account →
-            </button>
-            <button
-              onClick={() => saveAndProceed(true)}
-              style={{
-                width: '100%', background: 'none', border: 'none',
-                color: 'var(--text4)', cursor: 'pointer',
-                fontSize: 11, fontFamily: 'var(--font-mono)',
-                padding: '12px 0', letterSpacing: '0.06em',
-                textAlign: 'center',
-              }}
-            >
-              I'll do this later →
-            </button>
-            <button
-              onClick={() => setStep(path === 'declared' ? 'declaration' : 'reflection')}
-              style={{
-                width: '100%', background: 'none', border: 'none',
-                color: 'var(--text4)', cursor: 'pointer',
-                fontSize: 11, fontFamily: 'var(--font-mono)',
-                padding: '4px 0 8px', letterSpacing: '0.06em',
-                textAlign: 'center',
-              }}
-            >
-              ← back
-            </button>
           </div>
         )}
 

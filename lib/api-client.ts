@@ -54,3 +54,13 @@ export async function syncState(updates: Record<string, unknown>): Promise<void>
     body: JSON.stringify(updates),
   });
 }
+
+export async function logout(): Promise<void> {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  clearToken();
+}
+
+export function isAuthenticated(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!getToken();
+}

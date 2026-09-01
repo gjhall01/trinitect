@@ -159,5 +159,9 @@ export function verifyToken(token: string): { userId: string; phone: string } | 
 
 export function getTokenFromRequest(req: Request): string | null {
   const auth = req.headers.get('authorization');
-  return auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (auth?.startsWith('Bearer ')) return auth.slice(7);
+  // Fall back to httpOnly cookie
+  const cookieHeader = req.headers.get('cookie') ?? '';
+  const match = cookieHeader.match(/trinitect_session=([^;]+)/);
+  return match?.[1] ?? null;
 }

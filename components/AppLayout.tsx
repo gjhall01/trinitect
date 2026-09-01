@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { loadState } from '@/lib/store';
+import { loadState, hydrateFromServer } from '@/lib/store';
+import { logout } from '@/lib/api-client';
 import type { SubscriptionPlan } from '@/lib/types';
 
 function TodayIcon() {
@@ -42,6 +43,13 @@ export default function AppLayout({
     setStreak(s.streak);
     setPlan(s.subscriptionPlan);
     setName(s.profile.name);
+    // Hydrate from server on first authenticated load (non-blocking)
+    hydrateFromServer().then(() => {
+      const fresh = loadState();
+      setStreak(fresh.streak);
+      setPlan(fresh.subscriptionPlan);
+      setName(fresh.profile.name);
+    });
   }, []);
 
   const isPro = plan === 'pro';
@@ -94,6 +102,13 @@ export default function AppLayout({
             <span className="streak-num">{streak}</span>
             <span className="streak-label">day streak</span>
           </div>
+
+          <button
+            onClick={async () => { await logout(); router.replace('/login'); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: '4px 0', letterSpacing: '0.06em', textAlign: 'left' }}
+          >
+            sign out
+          </button>
         </div>
       </nav>
 
