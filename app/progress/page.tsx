@@ -69,6 +69,52 @@ function estimateMinutes(completions: Record<Domain, number>): number {
   return Math.round(completions.physical * 7 + completions.mental * 15 + completions.spiritual * 6);
 }
 
+function getWeekDates(weeksAgo: number): string[] {
+  const today = new Date();
+  const dow = today.getDay();
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() + mondayOffset - weeksAgo * 7);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+}
+
+function buildWeeklyInsights(history: DayRecord[]): {
+  thisWeekCount: number;
+  lastWeekCount: number;
+  bestDayOfWeek: string | null;
+  allThreeRate: number; // % of active days with all 3 domains
+  totalActiveDays: number;
+} {
+  const historyMap = buildHistoryMap(history);
+  const thisWeek = getWeekDates(0);
+  const lastWeek = getWeekDates(1);
+  const today = new Date().toISOString().split('T')[0];
+
+  const thisWeekCount = thisWeek.filter(d => d <= today && historyMap.has(d)).length;
+  const lastWeekCount = lastWeek.filter(d => historyMap.has(d)).length;
+
+  // Best day of week (0=Mon, 6=Sun label)
+  const DOW_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dowCounts = [0, 0, 0, 0, 0, 0, 0];
+  for (const r of history) {
+    const d = new Date(r.date + 'T12:00:00');
+    const dow = d.getDay(); // 0=Sun
+    const idx = dow === 0 ? 6 : dow - 1; // convert to Mon=0
+    dowCounts[idx]++;
+  }
+  const maxDow = dowCounts.indexOf(Math.max(...dowCounts));
+  const bestDayOfWeek = history.length >= 7 ? DOW_LABELS[maxDow] : null;
+
+  const allThreeDays = history.filter(r => r.domains.length >= 3).length;
+  const allThreeRate = history.length > 0 ? Math.round((allThreeDays / history.length) * 100) : 0;
+
+  return { thisWeekCount, lastWeekCount, bestDayOfWeek, allThreeRate, totalActiveDays: history.length };
+}
+
 function CalendarHeatmap({ historyMap }: { historyMap: Map<string, Domain[]> }) {
   const days = getLast35Days();
   const today = new Date().toISOString().split('T')[0];
@@ -299,6 +345,7 @@ export default function ProgressPage() {
   const goalsWithDomains = activeGoals.filter(g => g.linkedDomains.length > 0);
 
   const activeDays = history.length;
+  const weeklyInsights = buildWeeklyInsights(history);
 
   return (
     <AppLayout activeHref="/progress">
@@ -339,6 +386,63 @@ export default function ProgressPage() {
             </div>
           ))}
         </div>
+
+        {/* Weekly Insights */}
+        {activeDays >= 3 && (
+          <div className="fade-up fade-up-d1" style={{ marginBottom: 20 }}>
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              padding: '20px 22px',
+            }}>
+              <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text4)', marginBottom: 14 }}>
+                This week
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+
+                {/* This week vs last */}
+                <div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 4 }}>
+                    <span style={{ color: weeklyInsights.thisWeekCount >= weeklyInsights.lastWeekCount ? 'var(--physical)' : '#ff8c69' }}>
+                      {weeklyInsights.thisWeekCount}
+                    </span>
+                    <span style={{ fontSize: 14, color: 'var(--text4)', fontFamily: 'var(--font-mono)', marginLeft: 4 }}>/7</span>
+                  </div>
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text3)' }}>
+                    days this week
+                    {weeklyInsights.lastWeekCount > 0 && (
+                      <span style={{ marginLeft: 5, color: weeklyInsights.thisWeekCount >= weeklyInsights.lastWeekCount ? 'var(--physical)' : 'var(--text4)' }}>
+                        {weeklyInsights.thisWeekCount >= weeklyInsights.lastWeekCount ? '↑' : '↓'} vs {weeklyInsights.lastWeekCount} last
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* All-3 rate */}
+                <div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: weeklyInsights.allThreeRate >= 50 ? 'var(--mental)' : 'var(--text2)', lineHeight: 1, marginBottom: 4 }}>
+                    {weeklyInsights.allThreeRate}%
+                  </div>
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text3)' }}>
+                    full 3-domain days
+                  </div>
+                </div>
+
+                {/* Best day of week */}
+                <div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--spiritual)', lineHeight: 1, marginBottom: 4 }}>
+                    {weeklyInsights.bestDayOfWeek ?? '—'}
+                  </div>
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text3)' }}>
+                    {weeklyInsights.bestDayOfWeek ? 'your most consistent day' : 'build more history'}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Activity calendar */}
         <div className="panel fade-up fade-up-d2" style={{ marginBottom: 20 }}>
