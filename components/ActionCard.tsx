@@ -9,17 +9,98 @@ const DOMAIN_COLOR: Record<string, string> = {
   spiritual: 'var(--spiritual)',
 };
 
+type Alternative = { title: string; duration: number; description: string };
+
+function SwapPanel({
+  action,
+  color,
+  onSelect,
+  onClose,
+}: {
+  action: Action;
+  color: string;
+  onSelect: (alt: Alternative) => void;
+  onClose: () => void;
+}) {
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+
+  useEffect(() => {
+    import('@/lib/mock-ai').then(({ getAlternativesForDomain }) => {
+      const alts = getAlternativesForDomain(action.domain, action.title);
+      setAlternatives(alts.map(a => ({ title: a.title, duration: a.duration, description: a.description })));
+    });
+  }, [action.domain, action.title]);
+
+  return (
+    <div style={{
+      marginTop: 10,
+      padding: '12px 14px',
+      background: 'var(--surface2)',
+      borderRadius: 'var(--radius-sm)',
+      borderLeft: `2px solid ${color}40`,
+      animation: 'slideDown 0.2s cubic-bezier(0.4,0,0.2,1) both',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)' }}>
+          Swap with
+        </span>
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text4)', fontSize: 14, lineHeight: 1, padding: '0 2px' }}
+        >
+          ×
+        </button>
+      </div>
+      {alternatives.length === 0 ? (
+        <div style={{ fontSize: 11, color: 'var(--text4)', fontFamily: 'var(--font-mono)' }}>Loading…</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {alternatives.map(alt => (
+            <button
+              key={alt.title}
+              onClick={() => onSelect(alt)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                gap: 10, padding: '10px 12px',
+                background: 'var(--surface)',
+                border: `1px solid ${color}20`,
+                borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                transition: 'all var(--transition)',
+              }}
+              onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = `${color}60`; (e.currentTarget as HTMLButtonElement).style.background = `${color}08`; }}
+              onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = `${color}20`; (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)'; }}
+            >
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text1)', lineHeight: 1.3 }}>{alt.title}</div>
+                <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text3)', marginTop: 2 }}>
+                  {alt.description.slice(0, 55)}{alt.description.length > 55 ? '…' : ''}
+                </div>
+              </div>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color, flexShrink: 0 }}>
+                {alt.duration}m →
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ActionCard({
   action,
   onComplete,
+  onSwap,
   goalBadge,
 }: {
   action: Action;
   onComplete: (id: string, reflection?: { question: string; response: string }) => void;
+  onSwap?: (id: string, alternative: Alternative) => void;
   goalBadge?: { goalTitle: string; matchedThemes: string[] };
 }) {
   const [showWhy, setShowWhy] = useState(false);
   const [showReflect, setShowReflect] = useState(false);
+  const [showSwap, setShowSwap] = useState(false);
   const [reflectionText, setReflectionText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const color = DOMAIN_COLOR[action.domain] || 'var(--physical)';
@@ -66,6 +147,20 @@ export default function ActionCard({
             {action.domain}
           </span>
           <span className="action-duration">{action.duration} min</span>
+          {!action.completed && onSwap && (
+            <button
+              onClick={e => { e.stopPropagation(); setShowSwap(s => !s); setShowWhy(false); setShowReflect(false); }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                color: showSwap ? color : 'var(--text4)',
+                padding: 0, marginLeft: 'auto',
+                transition: 'color var(--transition)',
+              }}
+            >
+              swap ⇄
+            </button>
+          )}
         </div>
 
         {goalBadge && (
@@ -129,6 +224,16 @@ export default function ActionCard({
               {action.benefit}
             </p>
           </div>
+        )}
+
+        {/* Swap alternatives panel */}
+        {showSwap && !action.completed && onSwap && (
+          <SwapPanel
+            action={action}
+            color={color}
+            onSelect={(alt) => { onSwap(action.id, alt); setShowSwap(false); }}
+            onClose={() => setShowSwap(false)}
+          />
         )}
 
         {/* Inline reflection prompt — slides in after marking complete */}

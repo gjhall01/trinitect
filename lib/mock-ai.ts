@@ -1,4 +1,4 @@
-import type { Action, DailyPlan, DomainScores, Goal, GoalCategory, PatternTheme, UserProfile } from './types';
+import type { Action, DailyPlan, Domain, DomainScores, Goal, GoalCategory, PatternTheme, UserProfile } from './types';
 
 type PatternTemplate = Omit<Action, 'id' | 'completed'>;
 
@@ -331,6 +331,33 @@ export function explainPattern(
 
   if (!bestGoal || bestMatches.length === 0) return null;
   return { goalTitle: bestGoal.title, matchedThemes: bestMatches };
+}
+
+// Returns up to 3 alternative patterns for the same domain, excluding the current one.
+// Used for the per-card swap feature on the Today page.
+export function getAlternativesForDomain(
+  domain: Domain,
+  excludeTitle: string,
+  goalThemes: PatternTheme[] = [],
+): PatternTemplate[] {
+  const pool = domain === 'physical' ? physicalActions
+    : domain === 'mental' ? mentalActions
+    : spiritualActions;
+
+  const candidates = pool.filter(p => p.title !== excludeTitle);
+
+  if (goalThemes.length > 0) {
+    // Sort by theme match, then rotate by day for variety
+    const scored = candidates
+      .map(p => ({ p, score: scorePattern(p, goalThemes) }))
+      .sort((a, b) => b.score !== a.score ? b.score - a.score : 0);
+    return scored.slice(0, 3).map(s => s.p);
+  }
+
+  // No themes — rotate 3 starting from today's offset to add variety
+  const offset = dayOfYear() % candidates.length;
+  const rotated = [...candidates.slice(offset), ...candidates.slice(0, offset)];
+  return rotated.slice(0, 3);
 }
 
 export function getReplacementSuggestions(trigger: string): string[] {

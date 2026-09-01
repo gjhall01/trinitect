@@ -187,6 +187,17 @@ export function deleteTask(taskId: string): void {
   queueSync();
 }
 
+export function swapAction(actionId: string, replacement: Omit<import('./types').Action, 'id' | 'completed'>): void {
+  const state = loadState();
+  if (!state.todaysPlan) return;
+  const actions = state.todaysPlan.actions.map(a =>
+    a.id === actionId
+      ? { ...replacement, id: a.id, completed: false }
+      : a
+  );
+  saveState({ ...state, todaysPlan: { ...state.todaysPlan, actions } });
+}
+
 export function addJournalEntry(entry: PatternJournalEntry): void {
   const state = loadState();
   const journal = [...(state.journal || []), entry].slice(-365); // keep up to 1 year

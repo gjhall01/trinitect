@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import ActionCard from '@/components/ActionCard';
 import SaveProgressModal from '@/components/SaveProgressModal';
-import { loadState, completedAction, updatePlan, updateProfile } from '@/lib/store';
+import { loadState, completedAction, swapAction, updatePlan, updateProfile } from '@/lib/store';
 import { generateDailyPlan, explainPattern, getReplacementSuggestions } from '@/lib/mock-ai';
 import type { AppState, Action, Goal, Task } from '@/lib/types';
 
@@ -276,6 +276,11 @@ export default function TodayPage() {
     }
   }, [router]);
 
+  const handleSwap = useCallback((actionId: string, alt: { title: string; duration: number; description: string }) => {
+    swapAction(actionId, { ...alt, domain: loadState().todaysPlan?.actions.find(a => a.id === actionId)?.domain ?? 'physical', benefit: '', themes: [] });
+    setState(loadState());
+  }, []);
+
   const handleComplete = useCallback((actionId: string, reflection?: { question: string; response: string }) => {
     const before = loadState();
     completedAction(actionId, reflection);
@@ -476,7 +481,7 @@ export default function TodayPage() {
               const badge = explainPattern(action, goals);
               return (
                 <div key={action.id} className={`fade-up fade-up-d${i + 1}`}>
-                  <ActionCard action={action} onComplete={handleComplete} goalBadge={badge ?? undefined} />
+                  <ActionCard action={action} onComplete={handleComplete} onSwap={handleSwap} goalBadge={badge ?? undefined} />
                 </div>
               );
             })}
