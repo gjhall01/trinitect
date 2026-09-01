@@ -310,7 +310,9 @@ export default function ProgressPage() {
             Compounding Tracker
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 5, fontFamily: 'var(--font-mono)' }}>
-            Your patterns are working. Here's the proof.
+            {activeDays === 0 && streak === 0
+              ? 'Complete your first practice to start tracking momentum.'
+              : 'Your patterns are working. Here\'s the proof.'}
           </p>
         </div>
 
@@ -319,16 +321,16 @@ export default function ProgressPage() {
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24,
         }}>
           {[
-            { label: 'Days active',     value: activeDays || streak,   color: 'var(--physical)' },
-            { label: 'Patterns done',   value: totalPatterns,          color: 'var(--mental)'   },
-            { label: 'Minutes invested', value: `${totalMins}m`,       color: 'var(--spiritual)' },
-            { label: 'Best streak',     value: `${longestStreak || streak}d`, color: 'var(--physical)' },
+            { label: 'Days active',      value: activeDays || streak || '—',  color: 'var(--physical)'  },
+            { label: 'Patterns done',    value: totalPatterns || '—',         color: 'var(--mental)'    },
+            { label: 'Minutes invested', value: totalMins > 0 ? `${totalMins}m` : '—', color: 'var(--spiritual)' },
+            { label: 'Best streak',      value: (longestStreak || streak) > 0 ? `${longestStreak || streak}d` : '—', color: 'var(--physical)' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{
               background: 'var(--surface)', border: '1px solid var(--border)',
               borderRadius: 'var(--radius)', padding: '16px 18px',
             }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color, lineHeight: 1, marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: value === '—' ? 'var(--text4)' : color, lineHeight: 1, marginBottom: 4 }}>
                 {value}
               </div>
               <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>

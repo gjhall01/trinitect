@@ -596,6 +596,38 @@ export default function TodayPage() {
           </div>
         )}
 
+        {/* Community nudge — shown after all done */}
+        {allDone && (
+          <div
+            className="fade-up"
+            onClick={() => router.push('/community')}
+            style={{
+              marginBottom: 16, cursor: 'pointer',
+              padding: '14px 18px',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              display: 'flex', alignItems: 'center', gap: 14,
+              transition: 'border-color var(--transition)',
+            }}
+            onMouseOver={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-hover)')}
+            onMouseOut={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
+          >
+            <div style={{ fontSize: 18 }}>⟡</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 2 }}>
+                Your practice is done.
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                Share what's building in the community →
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        )}
+
         {/* Momentum link — persistent, subtle */}
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <button
