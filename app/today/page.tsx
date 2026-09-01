@@ -327,12 +327,35 @@ export default function TodayPage() {
     setState(loadState());
   }, []);
 
-  const { profile, todaysPlan, streak, goals = [], tasks = [] } = state;
+  const { profile, todaysPlan, streak, goals = [], tasks = [], history = [] } = state;
   const actions: Action[] = todaysPlan?.actions ?? [];
   const completedCount = actions.filter(a => a.completed).length;
   const allDone = completedCount === actions.length && actions.length > 0;
   const pct = actions.length > 0 ? Math.round((completedCount / actions.length) * 100) : 0;
   const totalMin = actions.reduce((s, a) => s + a.duration, 0);
+
+  // Build this-week data (Mon–Sun of current week)
+  const thisWeekDays = (() => {
+    const today = new Date();
+    const dow = today.getDay(); // 0=Sun
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+    const days: { date: string; label: string; isFuture: boolean; isToday: boolean }[] = [];
+    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + mondayOffset + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const todayStr = today.toISOString().split('T')[0];
+      days.push({
+        date: dateStr,
+        label: labels[i],
+        isFuture: dateStr > todayStr,
+        isToday: dateStr === todayStr,
+      });
+    }
+    return days;
+  })();
+  const historyMap = new Map(history.map(h => [h.date, h.domains]));
 
   return (
     <AppLayout activeHref="/today">
@@ -442,6 +465,43 @@ export default function TodayPage() {
               background: 'linear-gradient(90deg, var(--physical) 0%, var(--mental) 100%)',
               width: `${pct}%`, transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
             }} />
+          </div>
+        </div>
+
+        {/* This week — 7-day mini heatmap */}
+        <div className="fade-up fade-up-d1" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)', marginBottom: 16,
+        }}>
+          <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            This week
+          </span>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {thisWeekDays.map(({ date, label, isFuture, isToday }) => {
+              const domains = historyMap.get(date) || (isToday && allDone ? actions.map(a => a.domain) : []);
+              const allThree = domains.length >= 3;
+              const partial = domains.length > 0 && !allThree;
+              const bg = allThree ? 'var(--physical)'
+                : partial ? 'rgba(168,255,62,0.35)'
+                : isFuture ? 'transparent'
+                : 'var(--surface2)';
+              return (
+                <div key={date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: 6,
+                    background: bg,
+                    border: isToday ? '1.5px solid rgba(168,255,62,0.6)' : isFuture ? '1px dashed var(--border)' : '1px solid transparent',
+                    transition: 'all 0.3s',
+                    boxShadow: allThree && !isFuture ? '0 0 6px rgba(168,255,62,0.4)' : 'none',
+                  }} />
+                  <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--physical)' : 'var(--text4)', letterSpacing: '0.06em' }}>
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
