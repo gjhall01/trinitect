@@ -11,6 +11,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'A valid US phone number is required.' }, { status: 400 });
     }
 
+    // OTP bypass: when BYPASS_OTP=true, skip SNS and accept 000000
+    if (process.env.BYPASS_OTP === 'true') {
+      return NextResponse.json({ sent: true, bypass: true });
+    }
+
     await createAndSendOTP(phone);
     return NextResponse.json({ sent: true });
   } catch (err) {

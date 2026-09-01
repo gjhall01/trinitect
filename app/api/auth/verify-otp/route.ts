@@ -11,9 +11,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Phone and 6-digit code required.' }, { status: 400 });
     }
 
-    const valid = await verifyOTP(phone, otp);
-    if (!valid) {
-      return NextResponse.json({ error: 'Incorrect or expired code.' }, { status: 401 });
+    // OTP bypass: when BYPASS_OTP=true, accept 000000 without checking DynamoDB
+    const bypass = process.env.BYPASS_OTP === 'true';
+    if (bypass) {
+      if (otp !== '000000') {
+        return NextResponse.json({ error: 'Bypass mode: use code 000000.' }, { status: 401 });
+      }
+    } else {
+      const valid = await verifyOTP(phone, otp);
+      if (!valid) {
+        return NextResponse.json({ error: 'Incorrect or expired code.' }, { status: 401 });
+      }
     }
 
     const userId = await findOrCreateUser(phone);
