@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Trinitect auth — IAM policy and JWT secret.
+  The DynamoDB tables (trinitect-users, trinitect-otp) already exist
+  and are referenced by ARN; this stack only creates the policy and secret.
+
+Parameters:
+  Env:
+    Type: String
+    Default: prod
+    AllowedValues: [prod, staging, dev]
+
+  AmplifyRoleName:
+    Type: String
+    Default: amplifyconsole-backend-role
+    Description: Amplify SSR compute role to attach the policy to (post-deploy step)
+
+Resources:
+
+  # ── Secrets Manager: JWT signing key ─────────────────────────────────────────
+
+  JwtSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: trinitect/jwt-secret
+      Description: HS256 signing key for Trinitect 30-day session JWTs
+      GenerateSecretString:
+        PasswordLength: 64
+        ExcludePunctuation: true
+      Tags:
+        - Key: app
+          Value: trinitect
+        - Key: env
+          Value: !Ref Env
+
+  # ── IAM: Managed policy for Amplify SSR compute ───────────────────────────────
+  # Grants Next.js API routes (Amplify Lambda) access to DynamoDB + SNS.
+
+  TrinitectBackendPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: TrinitectBackendPolicy
+      Description: Trinitect DynamoDB + SNS SMS access for Amplify SSR
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+
+          - Sid: UsersTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+              - dynamodb:Query
+            Resource:
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/trinitect-users'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/trinitect-users/index/phone-index'
+
+          - Sid: OtpTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource:
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/trinitect-otp'
+
+          # Direct SMS via SNS (no topic — resource must be *)
+          - Sid: SnsSmsPublish
+            Effect: Allow
+            Action:
+              - sns:Publish
+            Resource: '*'
+
+Outputs:
+
+  TrinitectBackendPolicyArn:
+    Description: Attach this to the Amplify role (see AttachPolicyCmd)
+    Value: !Ref TrinitectBackendPolicy
+
+  JwtSecretArn:
+    Description: ARN of the JWT signing secret in Secrets Manager
+    Value: !Ref JwtSecret
+
+  # ── Post-deploy checklist ─────────────────────────────────────────────────────
+
+  Step1AttachPolicy:
+    Description: "STEP 1 — Run this to grant the Amplify role DynamoDB + SNS access"
+    Value: !Sub >-
+      aws iam attach-role-policy
+      --role-name ${AmplifyRoleName}
+      --policy-arn ${TrinitectBackendPolicy}
+      --profile jhall-dojo
+
+  Step2GetJwtSecret:
+    Description: "STEP 2 — Run this to retrieve the JWT_SECRET value"
+    Value: !Sub >-
+      aws secretsmanager get-secret-value
+      --secret-id trinitect/jwt-secret
+      --query SecretString
+      --output text
+      --region ${AWS::Region}
+      --profile jhall-dojo
+
+  Step3AmplifyEnvVars:
+    Description: "STEP 3 — Set these in Amplify Console > App settings > Environment variables"
+    Value: "JWT_SECRET=<value from Step 2>  |  USERS_TABLE=trinitect-users  |  OTP_TABLE=trinitect-otp  |  BACKEND_REGION=us-east-1"
