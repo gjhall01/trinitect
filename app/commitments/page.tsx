@@ -378,7 +378,7 @@ function AddCommitmentModal({ onClose, onSave, initialTitle = '' }: {
               {!initialTitle && (
                 <button onClick={() => setStep('category')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
               )}
-              <button className="primary-btn" style={{ flex: 2 }} disabled={!title.trim() || !targetDate} onClick={() => setStep('category')}>Continue →</button>
+              <button className="primary-btn" style={{ flex: 2 }} disabled={!title.trim() || !targetDate} onClick={() => setStep(initialTitle ? 'category' : 'markers')}>Continue →</button>
             </div>
           </div>
         )}
@@ -399,8 +399,10 @@ function AddCommitmentModal({ onClose, onSave, initialTitle = '' }: {
               })}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setStep(initialTitle ? 'details' : 'details')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
-              <button className="primary-btn" style={{ flex: 2 }} disabled={!category} onClick={() => setStep('markers')}>Continue →</button>
+              {initialTitle && (
+                <button onClick={() => setStep('details')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
+              )}
+              <button className="primary-btn" style={{ flex: 2 }} disabled={!category} onClick={() => setStep(initialTitle ? 'markers' : 'details')}>Continue →</button>
             </div>
           </div>
         )}
