@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadState, updateProfile, updatePlan } from '@/lib/store';
 import { generateDailyPlan, generatePracticePreview, DRIVER_THEMES } from '@/lib/mock-ai';
-import { requestOTP, verifyOTP as apiVerifyOTP, setToken } from '@/lib/api-client';
+import { requestOTP, verifyOTP as apiVerifyOTP, setToken, getToken } from '@/lib/api-client';
 import type { Action } from '@/lib/types';
 
 const DRIVERS: { name: string; desc: string }[] = [
@@ -47,11 +47,13 @@ export default function Onboarding() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [alreadyAuthed, setAlreadyAuthed] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const s = loadState();
     if (s.profile.onboarded) router.replace('/today');
+    if (getToken()) setAlreadyAuthed(true);
   }, [router]);
 
   useEffect(() => {
@@ -377,7 +379,33 @@ export default function Onboarding() {
               </div>
             ) : null}
 
-            {!otpSent ? (
+            {alreadyAuthed ? (
+              <>
+                <h1 className="onboard-heading" style={{ fontSize: 24, marginBottom: 8 }}>You're already in.</h1>
+                <p className="onboard-sub" style={{ marginBottom: 24 }}>
+                  Your account is linked. Give us a first name and we'll personalize your experience.
+                </p>
+                <input
+                  className="text-input"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  className="primary-btn"
+                  onClick={() => saveAndProceed(false)}
+                >
+                  Start your practice →
+                </button>
+                <button
+                  onClick={() => setStep(path === 'declared' ? 'declaration' : 'reflection')}
+                  style={{ width: '100%', background: 'none', border: 'none', color: 'var(--text4)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', padding: '4px 0 8px', letterSpacing: '0.06em', textAlign: 'center' }}
+                >
+                  ← back
+                </button>
+              </>
+            ) : !otpSent ? (
               <>
                 <h1 className="onboard-heading" style={{ fontSize: 24, marginBottom: 8 }}>
                   {path === 'declared' ? "Let's protect it." : 'Save your foundation.'}
