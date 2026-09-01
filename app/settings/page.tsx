@@ -144,6 +144,8 @@ export default function SettingsPage() {
   const prefs = profile.smsPreferences ?? { loginConfirmation: true, dailyReminders: true, milestoneNotifications: true };
   const phone = profile.phone;
   const isPro = plan === 'pro';
+  const drivers = profile.values || [];
+  const declaration = (profile as { commitmentDeclaration?: string }).commitmentDeclaration;
 
   return (
     <AppLayout activeHref="/settings">
@@ -250,8 +252,52 @@ export default function SettingsPage() {
           </Section>
         </div>
 
+        {/* Profile drivers */}
+        {drivers.length > 0 && (
+          <div className="fade-up fade-up-d2" style={{ marginBottom: 32 }}>
+            <div style={{
+              fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+              letterSpacing: '0.14em', color: 'var(--text4)', marginBottom: 12,
+            }}>
+              Your drivers
+            </div>
+            <div style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)', padding: '16px 18px',
+            }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: declaration ? 14 : 0 }}>
+                {drivers.map(d => (
+                  <span key={d} style={{
+                    padding: '4px 12px',
+                    background: 'rgba(168,255,62,0.06)',
+                    border: '1px solid rgba(168,255,62,0.18)',
+                    borderRadius: 20,
+                    fontSize: 11, fontWeight: 500,
+                    color: 'var(--physical)',
+                    fontFamily: 'var(--font-mono)',
+                  }}>
+                    {d}
+                  </span>
+                ))}
+              </div>
+              {declaration && (
+                <div style={{
+                  paddingTop: 12, borderTop: '1px solid var(--border)',
+                }}>
+                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                    Your declaration
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text2)', fontFamily: 'var(--font-display)', fontWeight: 600, lineHeight: 1.4 }}>
+                    "{declaration}"
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* SMS preferences */}
-        <div className="fade-up fade-up-d2">
+        <div className="fade-up fade-up-d3">
           <Section title="SMS Notifications">
             <Row
               label="Daily reminders"
