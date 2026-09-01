@@ -327,6 +327,10 @@ export default function TodayPage() {
     setState(loadState());
   }, []);
 
+  const now = new Date();
+  const hour = now.getHours();
+  const isEvening = hour >= 18; // 6pm+
+
   const { profile, todaysPlan, streak, goals = [], tasks = [], history = [] } = state;
   const actions: Action[] = todaysPlan?.actions ?? [];
   const completedCount = actions.filter(a => a.completed).length;
@@ -504,6 +508,28 @@ export default function TodayPage() {
             })}
           </div>
         </div>
+
+        {/* Evening urgency nudge — streak at risk */}
+        {isEvening && !allDone && completedCount < actions.length && streak > 0 && (
+          <div className="fade-up" style={{
+            background: 'rgba(255,140,105,0.05)',
+            border: '1px solid rgba(255,140,105,0.2)',
+            borderRadius: 'var(--radius)',
+            padding: '14px 18px', marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 14,
+            animation: 'fadeIn 0.4s ease both',
+          }}>
+            <div style={{ fontSize: 18 }}>🔥</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#ff8c69', marginBottom: 2, fontFamily: 'var(--font-display)' }}>
+                {streak} day streak on the line.
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                {actions.length - completedCount} pattern{actions.length - completedCount !== 1 ? 's' : ''} left · Don't break the chain.
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* All-done banner */}
         {allDone && (
