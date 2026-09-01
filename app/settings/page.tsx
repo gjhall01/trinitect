@@ -91,7 +91,7 @@ export default function SettingsPage() {
     if (!s.profile.onboarded) { router.replace('/'); return; }
     setProfile(s.profile);
     setPlan(s.subscriptionPlan);
-    setIsAuthenticated(!!getToken() || !!document.cookie.includes('trinitect_session'));
+    setIsAuthenticated(!!getToken());
     setMounted(true);
   }, [router]);
 
