@@ -116,13 +116,16 @@ export default function Onboarding() {
   const progress = stepIdx <= 0 ? 0 : (stepIdx / (steps.length - 1)) * 100;
 
   function saveAndProceed(skipAccount: boolean) {
+    const existingProfile = loadState().profile;
+    // Preserve phone from server state if already authenticated (alreadyAuthed path)
+    const resolvedPhone = phone.replace(/\D/g, '').length === 10
+      ? `+1${phone.replace(/\D/g, '')}`
+      : existingProfile.phone || undefined;
     const profile = {
-      name: firstName.trim() || 'Friend',
-      lastName: lastName.trim(),
-      email: email.trim(),
-      phone: phone.replace(/\D/g, '').length === 10
-        ? `+1${phone.replace(/\D/g, '')}`
-        : phone.trim() || undefined,
+      name: firstName.trim() || existingProfile.name || 'Friend',
+      lastName: lastName.trim() || existingProfile.lastName,
+      email: email.trim() || existingProfile.email,
+      phone: resolvedPhone,
       phoneSkipped: skipAccount,
       values: selectedDrivers,
       primaryGoal: declaration.trim(),
@@ -131,6 +134,7 @@ export default function Onboarding() {
       commitmentDeclaration: declaration.trim() || undefined,
       notLookingBack: path === 'declared' && !!declaration.trim(),
       onboardingPath: path,
+      smsPreferences: existingProfile.smsPreferences,
     };
     updateProfile(profile);
     const state = loadState();
