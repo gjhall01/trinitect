@@ -182,6 +182,7 @@ export default function PatternsPage() {
       <div style={{ maxWidth: 900 }}>
         {/* Header */}
         <div style={{ marginBottom: 32 }} className="fade-up">
+          <button onClick={() => router.push('/today')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', padding: 0, marginBottom: 12, letterSpacing: '0.06em' }}>← Back to Today</button>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', lineHeight: 1.15 }}>
             Your Patterns
           </h1>
