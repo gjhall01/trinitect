@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { requestOTP, verifyOTP, setToken } from '@/lib/api-client';
+import { requestOTP, verifyOTP, setToken, clearToken } from '@/lib/api-client';
 import { hydrateFromServer } from '@/lib/store';
 
 type Step = 'phone' | 'code';
@@ -125,12 +125,22 @@ function LoginForm() {
             {loading ? 'Sending…' : 'Send code →'}
           </button>
 
-          <div style={{ marginTop: 20, textAlign: 'center' }}>
+          <div style={{ marginTop: 20, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               onClick={() => router.push('/')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em' }}
             >
               New here? Create an account →
+            </button>
+            <button
+              onClick={() => {
+                clearToken();
+                localStorage.clear();
+                fetch('/api/auth/logout', { method: 'POST' }).finally(() => router.replace('/'));
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em', opacity: 0.5 }}
+            >
+              Reset & start fresh
             </button>
           </div>
         </>

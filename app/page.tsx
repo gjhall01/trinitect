@@ -52,7 +52,11 @@ export default function Onboarding() {
   useEffect(() => {
     setMounted(true);
     const s = loadState();
-    if (s.profile.onboarded) router.replace('/today');
+    if (s.profile.onboarded) {
+      // If onboarded but no token (cookie expired/cleared), go straight to login
+      // rather than /today which would hit the middleware and loop back
+      router.replace(getToken() ? '/today' : '/login');
+    }
     if (getToken()) setAlreadyAuthed(true);
   }, [router]);
 
