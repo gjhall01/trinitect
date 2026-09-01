@@ -196,6 +196,39 @@ function CalendarHeatmap({ historyMap }: { historyMap: Map<string, Domain[]> }) 
   );
 }
 
+const DOMAIN_INSIGHTS: Record<Domain, Record<string, string>> = {
+  physical: {
+    baseline: 'Your body is at rest. The first session breaks the baseline.',
+    awakening: 'Energy is becoming more reliable. Your body is responding.',
+    building: 'Physical capacity is compounding. You feel the difference in how you move through the day.',
+    compound: 'Your physical baseline has shifted. This is your new normal.',
+    automatic: 'Physical patterns are fully automatic. Your body runs on them.',
+  },
+  mental: {
+    baseline: 'Focus and clarity are inconsistent. Patterns here change everything downstream.',
+    awakening: 'Mental patterns are forming. Decision-making is getting cleaner.',
+    building: 'Cognitive clarity is compounding. Your thoughts are sharper, decisions faster.',
+    compound: 'Mental focus is automatic. You do your best thinking here.',
+    automatic: 'Mental performance is locked in. You operate at a different level.',
+  },
+  spiritual: {
+    baseline: 'This domain anchors everything else. Start here and watch the others lift.',
+    awakening: 'Purpose is becoming visible. Values are getting clearer.',
+    building: 'Spiritual clarity is compounding. Your "why" is getting stronger.',
+    compound: "You're operating from deep alignment. The motivation sustains itself.",
+    automatic: 'Purpose and values drive everything. This is integrated identity.',
+  },
+};
+
+function getDomainInsight(domain: Domain, score: number): string {
+  const ins = DOMAIN_INSIGHTS[domain];
+  if (score <= 35) return ins.baseline;
+  if (score <= 50) return ins.awakening;
+  if (score <= 65) return ins.building;
+  if (score <= 80) return ins.compound;
+  return ins.automatic;
+}
+
 function DomainBar({ domain, score, completions }: { domain: Domain; score: number; completions: number }) {
   const cfg = DOMAIN_CONFIG[domain];
   const velocity = completions > 0 ? '+' + completions + ' sessions' : 'not yet started';
@@ -236,10 +269,15 @@ function DomainBar({ domain, score, completions }: { domain: Domain; score: numb
         }} />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)' }}>baseline {cfg.default}</span>
         <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)' }}>100</span>
       </div>
+      {completions > 0 && (
+        <p style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 2 }}>
+          {getDomainInsight(domain, score)}
+        </p>
+      )}
     </div>
   );
 }
