@@ -104,6 +104,14 @@ export function archiveGoal(goalId: string): void {
   saveState({ ...state, goals });
 }
 
+export function restoreGoal(goalId: string): void {
+  const state = loadState();
+  const goals = (state.goals || []).map(g =>
+    g.id === goalId ? { ...g, archived: false } : g
+  );
+  saveState({ ...state, goals });
+}
+
 export function addTask(goalId: string, title: string): void {
   const state = loadState();
   const newTask: Task = {

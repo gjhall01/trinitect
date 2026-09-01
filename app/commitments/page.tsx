@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import { loadState, addGoal, toggleMilestone, archiveGoal, addTask, completeTask, deleteTask, reopenTask } from '@/lib/store';
+import { loadState, addGoal, toggleMilestone, archiveGoal, restoreGoal, addTask, completeTask, deleteTask, reopenTask } from '@/lib/store';
 import { getGoalPatternSuggestions } from '@/lib/mock-ai';
 import type { Goal, GoalCategory, GoalMilestone, Domain, Task, TaskDifficulty } from '@/lib/types';
 
@@ -41,7 +41,7 @@ function formatTargetDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// ── Moves Section (was: TasksSection) ────────────────────────────────────────
+// ── Moves Section ─────────────────────────────────────────────────────────────
 
 function MovesSection({ goal, tasks, onAdd, onComplete, onDelete, onReopen }: {
   goal: Goal;
@@ -240,7 +240,6 @@ function CommitmentCard({ goal, tasks, onMilestone, onArchive, onAddTask, onComp
         </div>
       )}
 
-      {/* Markers (was: Milestones) */}
       {total > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -283,13 +282,14 @@ function CommitmentCard({ goal, tasks, onMilestone, onArchive, onAddTask, onComp
 
 type ModalStep = 'category' | 'details' | 'markers';
 
-function AddCommitmentModal({ onClose, onSave }: {
+function AddCommitmentModal({ onClose, onSave, initialTitle = '' }: {
   onClose: () => void;
   onSave: (goal: Omit<Goal, 'id' | 'createdAt'>) => void;
+  initialTitle?: string;
 }) {
-  const [step, setStep] = useState<ModalStep>('category');
+  const [step, setStep] = useState<ModalStep>(initialTitle ? 'details' : 'category');
   const [category, setCategory] = useState<GoalCategory | null>(null);
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
   const [outcome, setOutcome] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [linkedDomains, setLinkedDomains] = useState<Domain[]>([]);
@@ -313,8 +313,17 @@ function AddCommitmentModal({ onClose, onSave }: {
     onSave({ category, title: title.trim(), outcome: outcome.trim(), targetDate, linkedDomains, milestones, archived: false });
   }
 
-  const stepLabels: ModalStep[] = ['category', 'details', 'markers'];
+  const stepLabels: ModalStep[] = initialTitle
+    ? ['details', 'category', 'markers']
+    : ['category', 'details', 'markers'];
+
   const stepIdx = stepLabels.indexOf(step);
+
+  const stepTitle: Record<ModalStep, string> = {
+    category: 'What area of life?',
+    details:  'Name your commitment',
+    markers:  'Add markers',
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(7,8,15,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
@@ -322,43 +331,28 @@ function AddCommitmentModal({ onClose, onSave }: {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: 'var(--text1)', letterSpacing: '-0.03em' }}>
-            {step === 'category' ? 'What area of life?' : step === 'details' ? 'Name your commitment' : 'Add markers'}
+            {stepTitle[step]}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 20, lineHeight: 1 }}>×</button>
         </div>
 
-        {/* Progress */}
         <div style={{ display: 'flex', gap: 5, marginBottom: 28 }}>
-          {stepLabels.map((s, i) => (
-            <div key={s} style={{ flex: 1, height: 2, borderRadius: 2, background: i <= stepIdx ? (cfg?.color || 'var(--physical)') : 'var(--surface3)', transition: 'background 0.3s' }} />
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ flex: 1, height: 2, borderRadius: 2, background: i <= stepIdx ? (cfg?.color || 'var(--physical)') : 'var(--surface3)', transition: 'background 0.3s' }} />
           ))}
         </div>
 
-        {/* Category */}
-        {step === 'category' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {CATEGORIES.map(cat => {
-                const c = CATEGORY_CONFIG[cat];
-                const selected = category === cat;
-                return (
-                  <button key={cat} onClick={() => setCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: selected ? c.bg : 'var(--surface2)', border: `1.5px solid ${selected ? c.color : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', cursor: 'pointer', textAlign: 'left', transition: 'all var(--transition)' }}>
-                    <span style={{ fontSize: 16, color: c.color }}>{c.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: selected ? c.color : 'var(--text2)' }}>{c.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <button className="primary-btn" disabled={!category} onClick={() => setStep('details')}>Continue →</button>
-          </div>
-        )}
-
-        {/* Details */}
+        {/* Details — shown first when coming from declaration */}
         {step === 'details' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {initialTitle && !category && (
+              <div style={{ padding: '10px 14px', background: 'rgba(168,255,62,0.05)', border: '1px solid rgba(168,255,62,0.15)', borderRadius: 'var(--radius-sm)', fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                From your declaration — edit freely.
+              </div>
+            )}
             <div>
               <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8 }}>What are you committing to?</label>
-              <input className="text-input" style={{ marginBottom: 0 }} placeholder="e.g. Ready to ask for a promotion by October" value={title} onChange={e => setTitle(e.target.value)} autoFocus />
+              <input className="text-input" style={{ marginBottom: 0 }} placeholder="e.g. Run a marathon by November" value={title} onChange={e => setTitle(e.target.value)} autoFocus={!initialTitle} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text3)', marginBottom: 8 }}>When will you know you've done it?</label>
@@ -379,8 +373,34 @@ function AddCommitmentModal({ onClose, onSave }: {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setStep('category')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
+              <button onClick={() => setStep('category')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>
+                {initialTitle && !category ? 'Pick area →' : '← Back'}
+              </button>
               <button className="primary-btn" style={{ flex: 2 }} disabled={!title.trim() || !targetDate} onClick={() => setStep('markers')}>Continue →</button>
+            </div>
+          </div>
+        )}
+
+        {/* Category */}
+        {step === 'category' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {CATEGORIES.map(cat => {
+                const c = CATEGORY_CONFIG[cat];
+                const selected = category === cat;
+                return (
+                  <button key={cat} onClick={() => setCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: selected ? c.bg : 'var(--surface2)', border: `1.5px solid ${selected ? c.color : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', cursor: 'pointer', textAlign: 'left', transition: 'all var(--transition)' }}>
+                    <span style={{ fontSize: 16, color: c.color }}>{c.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: selected ? c.color : 'var(--text2)' }}>{c.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {initialTitle && (
+                <button onClick={() => setStep('details')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
+              )}
+              <button className="primary-btn" style={{ flex: 2 }} disabled={!category} onClick={() => setStep(initialTitle ? 'markers' : 'details')}>Continue →</button>
             </div>
           </div>
         )}
@@ -392,7 +412,7 @@ function AddCommitmentModal({ onClose, onSave }: {
               Markers are proof points. Each one shows the commitment is real and gives you something to cross off. Optional — add more anytime.
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input className="text-input" style={{ marginBottom: 0, flex: 1 }} placeholder="e.g. Complete performance self-review" value={milestoneInput} onChange={e => setMilestoneInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMarker(); } }} />
+              <input className="text-input" style={{ marginBottom: 0, flex: 1 }} placeholder="e.g. Run my first 10k" value={milestoneInput} onChange={e => setMilestoneInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMarker(); } }} autoFocus />
               <button onClick={addMarker} disabled={!milestoneInput.trim()} style={{ padding: '0 18px', background: cfg?.color || 'var(--physical)', border: 'none', borderRadius: 'var(--radius)', color: 'var(--bg)', fontWeight: 700, cursor: 'pointer', fontSize: 18, lineHeight: 1, opacity: milestoneInput.trim() ? 1 : 0.4 }}>+</button>
             </div>
             {milestones.length > 0 && (
@@ -407,9 +427,9 @@ function AddCommitmentModal({ onClose, onSave }: {
               </div>
             )}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setStep('details')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
-              <button className="primary-btn" style={{ flex: 2 }} onClick={handleSave}>
-                {milestones.length > 0 ? `Lock in the commitment + ${milestones.length} marker${milestones.length > 1 ? 's' : ''}` : 'Lock in the commitment →'}
+              <button onClick={() => setStep(initialTitle ? 'category' : 'details')} style={{ flex: 1, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>← Back</button>
+              <button className="primary-btn" style={{ flex: 2 }} disabled={!category || !title.trim() || !targetDate} onClick={handleSave}>
+                {milestones.length > 0 ? `Lock in + ${milestones.length} marker${milestones.length > 1 ? 's' : ''}` : 'Lock in the commitment →'}
               </button>
             </div>
           </div>
@@ -424,13 +444,18 @@ function AddCommitmentModal({ onClose, onSave }: {
 export default function CommitmentsPage() {
   const router = useRouter();
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [archivedGoals, setArchivedGoals] = useState<Goal[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [modalInitialTitle, setModalInitialTitle] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [declaration, setDeclaration] = useState('');
 
   const refresh = useCallback(() => {
     const s = loadState();
     setGoals((s.goals || []).filter(g => !g.archived));
+    setArchivedGoals((s.goals || []).filter(g => g.archived));
     setTasks(s.tasks || []);
   }, []);
 
@@ -438,13 +463,20 @@ export default function CommitmentsPage() {
     const s = loadState();
     if (!s.profile.onboarded) { router.replace('/'); return; }
     setGoals((s.goals || []).filter(g => !g.archived));
+    setArchivedGoals((s.goals || []).filter(g => g.archived));
     setTasks(s.tasks || []);
+    setDeclaration(s.profile.commitmentDeclaration || '');
     setMounted(true);
   }, [router]);
 
   const handleSave = useCallback((goalData: Omit<Goal, 'id' | 'createdAt'>) => {
-    addGoal(goalData); refresh(); setShowModal(false);
+    addGoal(goalData); refresh(); setShowModal(false); setModalInitialTitle('');
   }, [refresh]);
+
+  function openModal(initialTitle = '') {
+    setModalInitialTitle(initialTitle);
+    setShowModal(true);
+  }
 
   if (!mounted) {
     return (
@@ -458,7 +490,9 @@ export default function CommitmentsPage() {
   return (
     <AppLayout activeHref="/commitments">
       <div style={{ maxWidth: 900 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 36 }} className="fade-up">
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: declaration && goals.length > 0 ? 16 : 36 }} className="fade-up">
           <div>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', lineHeight: 1.15 }}>
               Your Commitments
@@ -466,43 +500,78 @@ export default function CommitmentsPage() {
             <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 5, fontFamily: 'var(--font-mono)' }}>
               {goals.length === 0
                 ? 'What are you moving toward?'
-                : `${goals.length} active commitment${goals.length > 1 ? 's' : ''} · patterns building toward all of them`}
+                : `${goals.length} active · patterns building toward all of them`}
             </p>
           </div>
-          <button onClick={() => setShowModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--physical)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius)', padding: '10px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'opacity var(--transition)' }}>
+          <button onClick={() => openModal()} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--physical)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius)', padding: '10px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             + Make a Commitment
           </button>
         </div>
 
+        {/* Declaration quote — shown when goals exist */}
+        {declaration && goals.length > 0 && (
+          <div className="fade-up fade-up-d1" style={{ background: 'rgba(168,255,62,0.04)', border: '1px solid rgba(168,255,62,0.12)', borderRadius: 'var(--radius)', padding: '14px 20px', marginBottom: 28, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 16, color: 'var(--physical)', flexShrink: 0 }}>✦</span>
+            <div>
+              <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--physical)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Your declaration</div>
+              <div style={{ fontSize: 13, color: 'var(--text1)', fontFamily: 'var(--font-display)', fontWeight: 600, lineHeight: 1.4 }}>"{declaration}"</div>
+            </div>
+          </div>
+        )}
+
         {/* Empty state */}
         {goals.length === 0 && (
-          <div className="fade-up fade-up-d1" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '60px 40px', textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 20, opacity: 0.5 }}>⟁</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text1)', marginBottom: 10, letterSpacing: '-0.02em' }}>
-              Don't hold back on this one.
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 420, margin: '0 auto 32px' }}>
-              Your patterns are already compounding. A commitment gives that momentum a direction — and proves to yourself that you mean it.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, maxWidth: 480, margin: '0 auto 32px' }}>
-              {[
-                { example: '"Prove I can do hard things"', cat: 'personal' },
-                { example: '"Run my first marathon"', cat: 'physical' },
-                { example: '"Ask for the promotion"', cat: 'career' },
-              ].map(({ example, cat }) => {
-                const c = CATEGORY_CONFIG[cat as GoalCategory];
-                return (
-                  <div key={cat} style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 12px', textAlign: 'left', border: `1px solid ${c.color}22` }}>
-                    <div style={{ fontSize: 16, color: c.color, marginBottom: 8 }}>{c.icon}</div>
-                    <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: c.color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{c.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5, fontStyle: 'italic' }}>{example}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <button onClick={() => setShowModal(true)} className="primary-btn" style={{ maxWidth: 260, margin: '0 auto' }}>
-              Make your first commitment →
-            </button>
+          <div className="fade-up fade-up-d1" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '48px 40px', textAlign: 'center' }}>
+
+            {/* Declaration-aware empty state */}
+            {declaration ? (
+              <>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--physical)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Your declaration</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--text1)', marginBottom: 10, letterSpacing: '-0.02em', lineHeight: 1.3 }}>
+                  "{declaration}"
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 400, margin: '0 auto 28px' }}>
+                  You made the declaration. Now formalize it — give it a target date, markers to cross off, and a direction for your patterns.
+                </p>
+                <button onClick={() => openModal(declaration)} className="primary-btn" style={{ maxWidth: 280, margin: '0 auto 16px' }}>
+                  Formalize this commitment →
+                </button>
+                <div>
+                  <button onClick={() => openModal()} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em' }}>
+                    or start a different commitment
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 48, marginBottom: 20, opacity: 0.5 }}>⟁</div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text1)', marginBottom: 10, letterSpacing: '-0.02em' }}>
+                  Don't hold back on this one.
+                </h2>
+                <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 420, margin: '0 auto 32px' }}>
+                  Your patterns are already compounding. A commitment gives that momentum a direction — and proves to yourself that you mean it.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, maxWidth: 480, margin: '0 auto 32px' }}>
+                  {[
+                    { example: '"Prove I can do hard things"', cat: 'personal' },
+                    { example: '"Run my first marathon"',      cat: 'physical' },
+                    { example: '"Ask for the promotion"',      cat: 'career'   },
+                  ].map(({ example, cat }) => {
+                    const c = CATEGORY_CONFIG[cat as GoalCategory];
+                    return (
+                      <div key={cat} style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 12px', textAlign: 'left', border: `1px solid ${c.color}22` }}>
+                        <div style={{ fontSize: 16, color: c.color, marginBottom: 8 }}>{c.icon}</div>
+                        <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: c.color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{c.label}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5, fontStyle: 'italic' }}>{example}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button onClick={() => openModal()} className="primary-btn" style={{ maxWidth: 260, margin: '0 auto' }}>
+                  Make your first commitment →
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -534,9 +603,50 @@ export default function CommitmentsPage() {
             </p>
           </div>
         )}
+
+        {/* Archived section */}
+        {archivedGoals.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <button
+              onClick={() => setShowArchived(s => !s)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em', padding: '4px 0', marginBottom: showArchived ? 16 : 0 }}
+            >
+              <span style={{ fontSize: 9 }}>{showArchived ? '▼' : '▶'}</span>
+              {archivedGoals.length} archived commitment{archivedGoals.length > 1 ? 's' : ''}
+            </button>
+            {showArchived && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {archivedGoals.map(goal => {
+                  const cfg = CATEGORY_CONFIG[goal.category];
+                  return (
+                    <div key={goal.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', opacity: 0.6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ color: cfg.color, fontSize: 12 }}>{cfg.icon}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text2)', fontFamily: 'var(--font-display)', fontWeight: 500 }}>{goal.title}</span>
+                      </div>
+                      <button
+                        onClick={() => { restoreGoal(goal.id); refresh(); }}
+                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '3px 10px', cursor: 'pointer', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text3)', letterSpacing: '0.06em' }}
+                      >
+                        restore
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
-      {showModal && <AddCommitmentModal onClose={() => setShowModal(false)} onSave={handleSave} />}
+      {showModal && (
+        <AddCommitmentModal
+          onClose={() => { setShowModal(false); setModalInitialTitle(''); }}
+          onSave={handleSave}
+          initialTitle={modalInitialTitle}
+        />
+      )}
 
       <style>{`
         @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
