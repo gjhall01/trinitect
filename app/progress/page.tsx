@@ -402,7 +402,7 @@ export default function ProgressPage() {
     );
   }
 
-  const { domainScores, streak, longestStreak, history = [], goals = [], journal = [], patternCounts = {} } = state;
+  const { domainScores, streak, longestStreak, history = [], goals = [], journal = [], patternCounts = {}, currentGoal } = state;
   const historyMap = buildHistoryMap(history);
   const completions = estimateCompletions(domainScores);
   const totalPatterns = completions.physical + completions.mental + completions.spiritual;
@@ -411,6 +411,7 @@ export default function ProgressPage() {
   const goalsWithDomains = activeGoals.filter(g => g.linkedDomains.length > 0);
 
   const activeDays = history.length;
+  const fullDays = currentGoal?.completedDays ?? 0;
   const weeklyInsights = buildWeeklyInsights(history);
 
   return (
@@ -431,12 +432,11 @@ export default function ProgressPage() {
 
         {/* Top stats */}
         <div className="fade-up fade-up-d1" style={{
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24,
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 10,
         }}>
           {[
             { label: 'Days active',      value: activeDays || streak || '—',  color: 'var(--physical)'  },
             { label: 'Patterns done',    value: totalPatterns || '—',         color: 'var(--mental)'    },
-            { label: 'Minutes invested', value: totalMins > 0 ? `${totalMins}m` : '—', color: 'var(--spiritual)' },
             { label: 'Best streak',      value: (longestStreak || streak) > 0 ? `${longestStreak || streak}d` : '—', color: 'var(--physical)' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{
@@ -449,6 +449,41 @@ export default function ProgressPage() {
               <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {label}
               </div>
+            </div>
+          ))}
+        </div>
+        <div className="fade-up fade-up-d1" style={{
+          display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 24,
+        }}>
+          {[
+            {
+              label: 'Full practice days',
+              value: fullDays > 0 ? fullDays : '—',
+              sub: fullDays >= 21 ? 'Foundation complete ✦' : fullDays > 0 ? `${21 - fullDays} to Foundation` : null,
+              color: fullDays >= 21 ? 'var(--physical)' : 'var(--spiritual)',
+            },
+            {
+              label: 'Minutes invested',
+              value: totalMins > 0 ? `${totalMins}m` : '—',
+              sub: null,
+              color: 'var(--mental)',
+            },
+          ].map(({ label, value, sub, color }) => (
+            <div key={label} style={{
+              background: 'var(--surface)', border: `1px solid ${label === 'Full practice days' && fullDays >= 21 ? 'rgba(168,255,62,0.25)' : 'var(--border)'}`,
+              borderRadius: 'var(--radius)', padding: '16px 18px',
+            }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: value === '—' ? 'var(--text4)' : color, lineHeight: 1, marginBottom: 4 }}>
+                {value}
+              </div>
+              <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                {label}
+              </div>
+              {sub && (
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color, marginTop: 4, letterSpacing: '0.06em' }}>
+                  {sub}
+                </div>
+              )}
             </div>
           ))}
         </div>
