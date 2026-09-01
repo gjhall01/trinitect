@@ -6,7 +6,8 @@ import AppLayout from '@/components/AppLayout';
 import ActionCard from '@/components/ActionCard';
 import SaveProgressModal from '@/components/SaveProgressModal';
 import { loadState, completedAction, swapAction, updatePlan, updateProfile, regeneratePlan } from '@/lib/store';
-import { generateDailyPlan, explainPattern, getReplacementSuggestions } from '@/lib/mock-ai';
+import { generateDailyPlan, explainPattern, getReplacementSuggestions, DRIVER_THEMES } from '@/lib/mock-ai';
+import type { PatternTheme } from '@/lib/types';
 import type { AppState, Action, Goal, Task } from '@/lib/types';
 
 const TRIGGERS = ['stress', 'boredom', 'fatigue', 'distraction'];
@@ -700,7 +701,7 @@ export default function TodayPage() {
 
         {/* Pattern cards */}
         <div className="fade-up fade-up-d2" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text4)' }}>
               Today's practice
             </div>
@@ -722,6 +723,32 @@ export default function TodayPage() {
               </button>
             )}
           </div>
+          {(() => {
+            // Generate a 1-line rationale for why these patterns were selected
+            const activeGoals = goals.filter((g: Goal) => !g.archived);
+            let context: string | null = null;
+            if (activeGoals.length > 0 && !allDone) {
+              const g = activeGoals[0];
+              context = `Serving your "${g.title}" commitment`;
+            } else if (!allDone && profile.values && profile.values.length > 0) {
+              const actionThemes = actions.flatMap((a: Action) => (a.themes || []) as PatternTheme[]);
+              const best = profile.values
+                .map(driver => ({
+                  driver,
+                  overlap: actionThemes.filter(t => (DRIVER_THEMES[driver] || []).includes(t)).length,
+                }))
+                .sort((a, b) => b.overlap - a.overlap)[0];
+              if (best && best.overlap > 0) {
+                context = `Built around your ${best.driver} driver`;
+              }
+            }
+            if (!context) return null;
+            return (
+              <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em', marginBottom: 10, fontStyle: 'italic' }}>
+                {context}
+              </div>
+            );
+          })()}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {actions.map((action, i) => {
               const badge = explainPattern(action, goals);

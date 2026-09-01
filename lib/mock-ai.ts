@@ -234,6 +234,7 @@ export function getAllPatterns() {
 // Goal-aware daily plan. When the user has active goals, patterns are chosen
 // by matching their semantic themes to the goal's category themes.
 // "Spiritual goal about faith → Forgiveness sweep + Gratitude today."
+// When no goals exist, falls back to driver themes so patterns still feel personal.
 export function generateDailyPlan(
   profile: UserProfile,
   scores: DomainScores,
@@ -243,12 +244,16 @@ export function generateDailyPlan(
   const activeGoals = goals.filter(g => !g.archived);
   const goalThemes = activeGoals.flatMap(g => GOAL_CATEGORY_THEMES[g.category]);
 
+  // Fall back to driver themes so new users get patterns matched to their values
+  const driverThemes = (profile.values || []).flatMap(d => DRIVER_THEMES[d] || []);
+  const themes = goalThemes.length > 0 ? goalThemes : driverThemes;
+
   return {
     date: today,
     actions: [
-      withId(bestMatch(physicalActions, goalThemes)),
-      withId(bestMatch(mentalActions, goalThemes)),
-      withId(bestMatch(spiritualActions, goalThemes)),
+      withId(bestMatch(physicalActions, themes)),
+      withId(bestMatch(mentalActions, themes)),
+      withId(bestMatch(spiritualActions, themes)),
     ],
   };
 }
