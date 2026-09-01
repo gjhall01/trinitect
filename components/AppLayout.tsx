@@ -81,7 +81,12 @@ export default function AppLayout({
             {!isPro && <span style={{ fontSize: 10, color: 'var(--spiritual)', fontFamily: 'var(--font-mono)' }}>Upgrade →</span>}
           </div>
 
-          <div className="streak-chip" style={{ margin: 0 }}>
+          <div
+            className="streak-chip"
+            style={{ margin: 0, cursor: 'pointer' }}
+            onClick={() => router.push('/progress')}
+            title="View your momentum"
+          >
             <span className="streak-num">{streak}</span>
             <span className="streak-label">day streak</span>
           </div>

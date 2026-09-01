@@ -432,10 +432,10 @@ export default function ProgressPage() {
           </div>
         </div>
 
-        {/* Pattern → Goal connections */}
+        {/* Pattern → Commitment connections */}
         {activeGoals.length > 0 && (
           <div className="fade-up fade-up-d4">
-            <div className="panel-title">Pattern → Goal Momentum</div>
+            <div className="panel-title">Pattern → Commitment Momentum</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
               {activeGoals.map(goal => (
                 <GoalMomentum key={goal.id} goal={goal} scores={domainScores} />
@@ -455,13 +455,13 @@ export default function ProgressPage() {
             <span style={{ fontSize: 24, color: 'var(--text4)' }}>◎</span>
             <div>
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text2)', marginBottom: 3 }}>
-                No goals yet — your patterns are compounding without a destination.
+                No commitments yet — your patterns are compounding without a destination.
               </div>
               <button
-                onClick={() => router.push('/goals')}
+                onClick={() => router.push('/commitments')}
                 style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--physical)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
-                Set a goal to see how your patterns are driving it →
+                Name a commitment to see how your patterns are driving it →
               </button>
             </div>
           </div>

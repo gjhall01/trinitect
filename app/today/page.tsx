@@ -382,7 +382,7 @@ export default function TodayPage() {
         {allDone && (
           <div className="fade-up" style={{ background: 'rgba(168,255,62,0.05)', border: '1px solid rgba(168,255,62,0.2)', borderRadius: 'var(--radius)', padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ fontSize: 26 }}>✦</div>
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--physical)', marginBottom: 2 }}>
                 All three domains today.
               </div>
@@ -390,6 +390,17 @@ export default function TodayPage() {
                 Physical, mental, spiritual — the full cycle. That's not discipline, that's a pattern forming.
               </div>
             </div>
+            <button
+              onClick={() => router.push('/progress')}
+              style={{
+                background: 'none', border: '1px solid rgba(168,255,62,0.25)',
+                borderRadius: 'var(--radius-sm)', padding: '7px 12px', cursor: 'pointer',
+                fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--physical)',
+                letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >
+              View momentum →
+            </button>
           </div>
         )}
 
@@ -424,6 +435,23 @@ export default function TodayPage() {
             />
           </div>
         )}
+
+        {/* Momentum link — persistent, subtle */}
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <button
+            onClick={() => router.push('/progress')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)',
+              letterSpacing: '0.06em', padding: '4px 0',
+              transition: 'color var(--transition)',
+            }}
+            onMouseOver={e => (e.currentTarget.style.color = 'var(--text2)')}
+            onMouseOut={e => (e.currentTarget.style.color = 'var(--text4)')}
+          >
+            View your momentum →
+          </button>
+        </div>
 
         {/* Can't do one of these? */}
         <div className="fade-up fade-up-d3" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px 22px', marginBottom: 20 }}>
