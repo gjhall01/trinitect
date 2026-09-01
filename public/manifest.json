@@ -1,0 +1,37 @@
+{
+  "name": "Trinitect",
+  "short_name": "Trinitect",
+  "description": "Build a life that compounds.",
+  "start_url": "/today",
+  "display": "standalone",
+  "background_color": "#07080f",
+  "theme_color": "#07080f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Today's practice",
+      "url": "/today",
+      "description": "Complete today's patterns"
+    },
+    {
+      "name": "View momentum",
+      "url": "/progress",
+      "description": "See your compounding progress"
+    }
+  ]
+}

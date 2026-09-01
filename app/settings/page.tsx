@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { loadState, updateProfile } from '@/lib/store';
 import { logout, getToken } from '@/lib/api-client';
+import { getNotifPermission, requestNotifPermission, type NotifPermission } from '@/lib/push';
 import type { UserProfile, SmsPreferences } from '@/lib/types';
 
 function maskPhone(phone: string): string {
@@ -85,6 +86,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotifPermission>('unsupported');
+  const [notifRequesting, setNotifRequesting] = useState(false);
 
   useEffect(() => {
     const s = loadState();
@@ -92,8 +95,17 @@ export default function SettingsPage() {
     setProfile(s.profile);
     setPlan(s.subscriptionPlan);
     setIsAuthenticated(!!getToken());
+    setNotifPermission(getNotifPermission());
     setMounted(true);
   }, [router]);
+
+  const handleEnablePush = useCallback(async () => {
+    if (notifPermission === 'granted') return;
+    setNotifRequesting(true);
+    const result = await requestNotifPermission();
+    setNotifPermission(result);
+    setNotifRequesting(false);
+  }, [notifPermission]);
 
   const updateSmsPreference = useCallback(async (key: keyof SmsPreferences, val: boolean) => {
     if (!profile) return;
@@ -289,8 +301,59 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* Push Notifications */}
+        {notifPermission !== 'unsupported' && (
+          <div className="fade-up fade-up-d3">
+            <Section title="Browser Notifications">
+              <Row
+                label="Daily practice reminder"
+                sub={
+                  notifPermission === 'granted'
+                    ? 'Fires morning + evening if you haven\'t visited'
+                    : notifPermission === 'denied'
+                    ? 'Blocked — enable in browser settings'
+                    : 'Get nudged when your streak is at risk'
+                }
+                border={false}
+                right={
+                  notifPermission === 'granted' ? (
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '4px 10px', borderRadius: 20,
+                      background: 'rgba(168,255,62,0.08)',
+                      border: '1px solid rgba(168,255,62,0.25)',
+                    }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--physical)' }} />
+                      <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', color: 'var(--physical)' }}>
+                        on
+                      </span>
+                    </div>
+                  ) : notifPermission === 'denied' ? (
+                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text4)' }}>
+                      blocked
+                    </span>
+                  ) : (
+                    <button
+                      onClick={handleEnablePush}
+                      disabled={notifRequesting}
+                      style={{
+                        fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                        padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+                        background: 'rgba(168,255,62,0.08)', border: '1px solid rgba(168,255,62,0.25)',
+                        color: 'var(--physical)', opacity: notifRequesting ? 0.5 : 1,
+                      }}
+                    >
+                      {notifRequesting ? 'requesting…' : 'Enable →'}
+                    </button>
+                  )
+                }
+              />
+            </Section>
+          </div>
+        )}
+
         {/* Data */}
-        <div className="fade-up fade-up-d3">
+        <div className="fade-up fade-up-d4">
           <Section title="Session">
             <Row
               label="Sign out"

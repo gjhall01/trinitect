@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { loadState, hydrateFromServer } from '@/lib/store';
 import { logout } from '@/lib/api-client';
+import { registerServiceWorker, checkAndShowDailyReminder } from '@/lib/push';
 import type { SubscriptionPlan } from '@/lib/types';
 
 function TodayIcon() {
@@ -51,6 +52,12 @@ export default function AppLayout({
     setStreak(s.streak);
     setPlan(s.subscriptionPlan);
     setName(s.profile.name);
+    // Register service worker for PWA + push support
+    registerServiceWorker();
+    // Check if we should fire a daily reminder notification
+    if (s.profile.smsPreferences?.dailyReminders !== false) {
+      checkAndShowDailyReminder(s.profile.name);
+    }
     // Hydrate from server on first authenticated load (non-blocking)
     hydrateFromServer().then(() => {
       const fresh = loadState();
