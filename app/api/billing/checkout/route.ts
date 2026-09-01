@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth-server';
-import { PRICES, stripe } from '@/lib/stripe-server';
+import { PRICES, getStripe } from '@/lib/stripe-server';
 
 export async function POST(req: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const token = getTokenFromRequest(req);
     const claims = token ? verifyToken(token) : null;
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/dashboard?upgraded=1`,

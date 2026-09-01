@@ -1,12 +1,14 @@
 import Stripe from 'stripe';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-08-26.dahlia' as const,
-});
+export function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return new Stripe(key, { apiVersion: '2026-08-26.dahlia' as const });
+}
 
 export const PRICES = {
-  monthly: process.env.STRIPE_PRICE_MONTHLY!,
-  annual: process.env.STRIPE_PRICE_ANNUAL!,
+  get monthly() { return process.env.STRIPE_PRICE_MONTHLY ?? ''; },
+  get annual()  { return process.env.STRIPE_PRICE_ANNUAL  ?? ''; },
 };
 
 export async function createCheckoutSession(
@@ -15,7 +17,7 @@ export async function createCheckoutSession(
   priceId: string,
   returnUrl: string,
 ): Promise<string> {
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${returnUrl}/dashboard?upgraded=1`,
@@ -33,7 +35,7 @@ export async function createPortalSession(
   stripeCustomerId: string,
   returnUrl: string,
 ): Promise<string> {
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: `${returnUrl}/dashboard`,
   });

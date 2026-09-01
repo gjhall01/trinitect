@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe-server';
+import { getStripe } from '@/lib/stripe-server';
 import { updateUserFields } from '@/lib/auth-server';
 import type Stripe from 'stripe';
 
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     console.error('Webhook signature failed', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         const inv = event.data.object as Stripe.Invoice & { subscription?: string | { id: string } };
         const subId = typeof inv.subscription === 'string' ? inv.subscription : inv.subscription?.id;
         if (subId) {
-          const sub = await stripe.subscriptions.retrieve(subId);
+          const sub = await getStripe().subscriptions.retrieve(subId);
           const userId = sub.metadata?.userId;
           if (userId) {
             await updateUserFields(userId, { subscriptionPlan: 'free', subscriptionStatus: 'past_due' });
