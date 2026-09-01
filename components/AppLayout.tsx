@@ -5,42 +5,20 @@ import { useEffect, useState } from 'react';
 import { loadState } from '@/lib/store';
 import type { SubscriptionPlan } from '@/lib/types';
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: '⬡', href: '/dashboard' },
-  { label: 'Plan', icon: '◈', href: '/plan' },
-  { label: 'Patterns', icon: '⟁', href: '/patterns' },
-  { label: 'Goals', icon: '◎', href: '/goals' },
-  { label: 'Progress', icon: '⇧', href: '/progress' },
-  { label: 'Community', icon: '⟡', href: '/community' },
-];
-
-function HomeIcon() {
+function TodayIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
 }
-function PlanIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>;
+function CommitmentIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
 }
-function PatternIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
-}
-function GoalIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
-}
-
-function ProgressIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
-}
-
 function CommunityIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
 }
 
-const MOBILE_NAV = [
-  { label: 'Today', Icon: HomeIcon, href: '/dashboard' },
-  { label: 'Goals', Icon: GoalIcon, href: '/goals' },
-  { label: 'Progress', Icon: ProgressIcon, href: '/progress' },
-  { label: 'Community', Icon: CommunityIcon, href: '/community' },
-  { label: 'Plan', Icon: PlanIcon, href: '/plan' },
+const NAV = [
+  { label: 'Today',       Icon: TodayIcon,      href: '/today' },
+  { label: 'Commitments', Icon: CommitmentIcon, href: '/commitments' },
+  { label: 'Community',   Icon: CommunityIcon,  href: '/community' },
 ];
 
 export default function AppLayout({
@@ -74,14 +52,14 @@ export default function AppLayout({
 
         <div className="nav-group">
           <span className="nav-label">Navigate</span>
-          {NAV_ITEMS.map(item => (
+          {NAV.map(({ label, Icon, href }) => (
             <button
-              key={item.label}
-              className={`nav-item ${item.href === activeHref ? 'active' : ''}`}
-              onClick={() => router.push(item.href)}
+              key={label}
+              className={`nav-item ${href === activeHref ? 'active' : ''}`}
+              onClick={() => router.push(href)}
             >
-              <span style={{ fontFamily: 'monospace', fontSize: 14 }}>{item.icon}</span>
-              {item.label}
+              <Icon />
+              {label}
             </button>
           ))}
         </div>
@@ -114,9 +92,10 @@ export default function AppLayout({
         {children}
       </main>
 
+      {/* Mobile nav */}
       <div className="mobile-nav">
         <div className="mobile-nav-items">
-          {MOBILE_NAV.map(({ label, Icon, href }) => (
+          {NAV.map(({ label, Icon, href }) => (
             <button
               key={label}
               className={`mobile-nav-item ${href === activeHref ? 'active' : ''}`}

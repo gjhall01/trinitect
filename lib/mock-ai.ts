@@ -155,6 +155,25 @@ const spiritualActions: PatternTemplate[] = [
   },
 ];
 
+// ── Driver → theme mapping ────────────────────────────────────────────────────
+// Maps the 12 onboarding drivers to their semantic themes.
+// Used to personalize the practice preview in onboarding before any goal is set.
+
+export const DRIVER_THEMES: Record<string, PatternTheme[]> = {
+  Vitality:   ['energy', 'resilience', 'regulation'],
+  Clarity:    ['clarity', 'focus', 'avoidance'],
+  Mastery:    ['identity', 'discipline', 'focus'],
+  Meaning:    ['purpose', 'trust', 'identity'],
+  Freedom:    ['clarity', 'avoidance', 'regulation'],
+  Connection: ['connection', 'gratitude', 'trust'],
+  Discipline: ['discipline', 'focus', 'resilience'],
+  Creativity: ['clarity', 'identity', 'purpose'],
+  Wisdom:     ['purpose', 'clarity', 'identity'],
+  Impact:     ['purpose', 'discipline', 'connection'],
+  Growth:     ['identity', 'resilience', 'discipline'],
+  Peace:      ['regulation', 'trust', 'forgiveness'],
+};
+
 // ── Recommendation engine ─────────────────────────────────────────────────────
 
 function dayOfYear(): number {
@@ -192,6 +211,17 @@ function withId(template: PatternTemplate): Action {
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
+
+// Generates a practice preview for the onboarding "taste of value" step,
+// matched to the drivers the user selected before any goal/commitment exists.
+export function generatePracticePreview(drivers: string[]): Action[] {
+  const themes = drivers.flatMap(d => DRIVER_THEMES[d] || []);
+  return [
+    withId(bestMatch(physicalActions, themes)),
+    withId(bestMatch(mentalActions, themes)),
+    withId(bestMatch(spiritualActions, themes)),
+  ];
+}
 
 export function getAllPatterns() {
   return {

@@ -44,6 +44,8 @@ export type SmsPreferences = {
 
 export type UserProfile = {
   name: string;
+  lastName?: string;
+  email?: string;
   values: string[];
   primaryGoal: string;
   energyLevel: number; // 1–5
@@ -51,6 +53,9 @@ export type UserProfile = {
   phone?: string;
   smsPreferences?: SmsPreferences;
   phoneSkipped?: boolean;
+  commitmentDeclaration?: string;
+  notLookingBack?: boolean;
+  onboardingPath?: 'declared' | 'exploring';
 };
 
 export type StageGoal = {
