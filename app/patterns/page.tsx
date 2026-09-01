@@ -30,18 +30,20 @@ type PatternEntry = {
   reflection?: string;
 };
 
-function PatternCard({ pattern, domain, expanded, onToggle }: {
+function PatternCard({ pattern, domain, expanded, onToggle, count = 0 }: {
   pattern: PatternEntry;
   domain: Domain;
   expanded: boolean;
   onToggle: () => void;
+  count?: number;
 }) {
   const cfg = DOMAIN_CONFIG[domain];
+  const isHabit = count >= 21;
 
   return (
     <div style={{
       background: 'var(--surface2)',
-      border: `1px solid ${expanded ? cfg.color + '40' : 'var(--border)'}`,
+      border: `1px solid ${expanded ? cfg.color + '40' : isHabit ? cfg.color + '30' : 'var(--border)'}`,
       borderRadius: 'var(--radius)',
       overflow: 'hidden',
       transition: 'border-color var(--transition)',
@@ -56,7 +58,7 @@ function PatternCard({ pattern, domain, expanded, onToggle }: {
       >
         <div style={{
           width: 3, height: 40, flexShrink: 0, borderRadius: 2,
-          background: cfg.color, opacity: 0.7,
+          background: cfg.color, opacity: count > 0 ? 1 : 0.7,
         }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text1)', lineHeight: 1.3 }}>
@@ -66,9 +68,23 @@ function PatternCard({ pattern, domain, expanded, onToggle }: {
             {pattern.duration} min · {pattern.description.slice(0, 60)}{pattern.description.length > 60 ? '…' : ''}
           </div>
         </div>
-        <span style={{ color: expanded ? cfg.color : 'var(--text3)', fontSize: 11, fontFamily: 'var(--font-mono)', transition: 'color var(--transition)', letterSpacing: '0.04em' }}>
-          {expanded ? '▲ LESS' : '▼ WHY'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {count > 0 && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              padding: '3px 8px', borderRadius: 20,
+              background: isHabit ? `${cfg.color}20` : 'var(--surface)',
+              border: `1px solid ${isHabit ? cfg.color + '40' : 'var(--border)'}`,
+            }}>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: isHabit ? cfg.color : 'var(--text3)', fontWeight: isHabit ? 700 : 400 }}>
+                {count}×{isHabit && ' ✦'}
+              </span>
+            </div>
+          )}
+          <span style={{ color: expanded ? cfg.color : 'var(--text3)', fontSize: 11, fontFamily: 'var(--font-mono)', transition: 'color var(--transition)', letterSpacing: '0.04em' }}>
+            {expanded ? '▲' : '▼'}
+          </span>
+        </div>
       </button>
 
       {expanded && (
@@ -151,6 +167,7 @@ export default function PatternsPage() {
   const [scores, setScores] = useState<DomainScores>({ physical: 0, mental: 0, spiritual: 0 });
   const [streak, setStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
+  const [patternCounts, setPatternCounts] = useState<Record<string, number>>({});
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Domain>('physical');
 
@@ -162,6 +179,7 @@ export default function PatternsPage() {
     setScores(s.domainScores);
     setStreak(s.streak);
     setLongestStreak(s.longestStreak);
+    setPatternCounts(s.patternCounts || {});
     setMounted(true);
   }, [router]);
 
@@ -266,6 +284,7 @@ export default function PatternsPage() {
                   domain={activeTab}
                   expanded={expandedPattern === key}
                   onToggle={() => setExpandedPattern(expandedPattern === key ? null : key)}
+                  count={patternCounts[pattern.title] || 0}
                 />
               );
             })}
