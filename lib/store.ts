@@ -255,10 +255,16 @@ export async function hydrateFromServer(): Promise<void> {
     const { user } = await getMe();
     if (!user) return;
     const local = loadState();
-    // Server wins for profile/streak/goals; merge rather than replace
+
+    // If local user completed onboarding but server hasn't synced yet,
+    // keep local profile and let queueSync push it. Server wins in all other cases.
+    const serverOnboarded = user.profile?.onboarded === true;
+    const localOnboarded = local.profile.onboarded === true;
+    const useLocalProfile = localOnboarded && !serverOnboarded;
+
     const merged: AppState = {
       ...local,
-      profile: user.profile ?? local.profile,
+      profile: useLocalProfile ? local.profile : (user.profile ?? local.profile),
       domainScores: user.domainScores ?? local.domainScores,
       streak: user.streak ?? local.streak,
       longestStreak: user.longestStreak ?? local.longestStreak,
@@ -269,6 +275,9 @@ export async function hydrateFromServer(): Promise<void> {
       todaysPlan: user.todaysPlan ?? local.todaysPlan,
     };
     saveState(merged);
+
+    // If local had more progress, push it up now so server catches up
+    if (useLocalProfile) queueSync();
   } catch {
     // Not authenticated or offline — use localStorage
   }
