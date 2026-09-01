@@ -342,7 +342,7 @@ function LogWinModal({ profile, onClose, onPosted }: {
         </div>
         <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 24, lineHeight: 1.5 }}>
           {step === 1
-            ? "Your story is someone else's proof that this works."
+            ? "Your story might be the reason someone else commits."
             : 'Give it context — what was the old pattern, what replaced it?'}
         </p>
 
@@ -524,22 +524,44 @@ function LogWinModal({ profile, onClose, onPosted }: {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-const CATEGORY_FILTERS = ['all', ...Object.keys(CATEGORY_CONFIG)] as const;
+// Maps each driver to the domains it's most associated with (for "For You" filtering)
+const DRIVER_DOMAINS: Record<string, Domain[]> = {
+  Vitality:    ['physical'],
+  Clarity:     ['mental'],
+  Mastery:     ['mental'],
+  Meaning:     ['spiritual'],
+  Freedom:     ['mental'],
+  Connection:  ['spiritual'],
+  Discipline:  ['physical', 'mental'],
+  Creativity:  ['mental', 'spiritual'],
+  Wisdom:      ['mental', 'spiritual'],
+  Impact:      ['mental', 'spiritual'],
+  Growth:      ['physical', 'mental'],
+  Peace:       ['spiritual'],
+};
+
+const CATEGORY_FILTERS = ['for-you', 'all', ...Object.keys(CATEGORY_CONFIG)] as const;
+
+type UserProfile = { name: string; drivers: string[]; commitment?: string };
 
 export default function CommunityPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [profile, setProfile] = useState({ name: '' });
+  const [profile, setProfile] = useState<UserProfile>({ name: '', drivers: [] });
   const [realPosts, setRealPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('for-you');
   const [heartedIds, setHeartedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const s = loadState();
     if (!s.profile.onboarded) { router.replace('/'); return; }
-    setProfile({ name: s.profile.name });
+    setProfile({
+      name: s.profile.name,
+      drivers: s.profile.values || [],
+      commitment: s.profile.commitmentDeclaration,
+    });
 
     // Load hearted posts from localStorage
     try {
@@ -601,16 +623,30 @@ export default function CommunityPage() {
     _hearted: heartedIds.has(p.postId),
   }));
 
+  // Derive the set of domains that match the user's drivers
+  const userDomains = new Set<Domain>(
+    profile.drivers.flatMap(d => DRIVER_DOMAINS[d] || [])
+  );
+
+  function matchesForYou(post: { domain: Domain[]; category: string }): boolean {
+    if (userDomains.size === 0) return true;
+    return post.domain.some(d => userDomains.has(d));
+  }
+
   // Filter
   const filtered = categoryFilter === 'all'
     ? annotatedPosts
-    : annotatedPosts.filter(p => p.category === categoryFilter);
+    : categoryFilter === 'for-you'
+      ? annotatedPosts.filter(matchesForYou)
+      : annotatedPosts.filter(p => p.category === categoryFilter);
 
   // Seed stories: show as editorial if fewer than 10 real posts
   const showSeeds = realPosts.length < 10;
   const filteredSeeds = categoryFilter === 'all'
     ? SEED_POSTS
-    : SEED_POSTS.filter(p => p.category === categoryFilter);
+    : categoryFilter === 'for-you'
+      ? SEED_POSTS.filter(matchesForYou)
+      : SEED_POSTS.filter(p => p.category === categoryFilter);
 
   const totalCount = realPosts.length + SEED_POSTS.length;
 
@@ -619,8 +655,8 @@ export default function CommunityPage() {
       <div style={{ maxWidth: 720 }}>
 
         {/* Header */}
-        <div className="fade-up" style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div className="fade-up" style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
             <div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text1)', lineHeight: 1.15 }}>
                 Community
@@ -641,15 +677,39 @@ export default function CommunityPage() {
                 flexShrink: 0, marginLeft: 16,
               }}
             >
-              + Log a Win
+              + Share a win
             </button>
           </div>
+
+          {/* User's drivers — show what's filtering their "For You" feed */}
+          {profile.drivers.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
+              <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: '24px', flexShrink: 0 }}>
+                Your drivers
+              </span>
+              {profile.drivers.map(d => (
+                <span key={d} style={{
+                  padding: '3px 10px',
+                  background: 'rgba(168,255,62,0.06)',
+                  border: '1px solid rgba(168,255,62,0.15)',
+                  borderRadius: 20,
+                  fontSize: 10, fontWeight: 500,
+                  color: 'rgba(168,255,62,0.7)',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  {d}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Category filter */}
+        {/* Filter bar */}
         <div className="fade-up fade-up-d1" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 }}>
           {CATEGORY_FILTERS.map(cat => {
-            const cfg = cat === 'all' ? null : CATEGORY_CONFIG[cat];
+            const isForYou = cat === 'for-you';
+            const isAll = cat === 'all';
+            const cfg = (!isForYou && !isAll) ? CATEGORY_CONFIG[cat] : null;
             const selected = categoryFilter === cat;
             return (
               <button
@@ -667,11 +727,11 @@ export default function CommunityPage() {
                   fontSize: 11, fontFamily: 'var(--font-mono)',
                   color: selected ? (cfg ? cfg.color : 'var(--physical)') : 'var(--text3)',
                   transition: 'all var(--transition)',
-                  textTransform: cat === 'all' ? 'uppercase' : 'capitalize',
-                  letterSpacing: cat === 'all' ? '0.06em' : '0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
                 }}
               >
-                {cat === 'all' ? 'All' : cfg?.label}
+                {isForYou ? 'For You' : isAll ? 'All' : cfg?.label}
               </button>
             );
           })}
@@ -747,12 +807,28 @@ export default function CommunityPage() {
           display: 'flex', alignItems: 'center', gap: 16,
         }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)', marginBottom: 4 }}>
-              Have a pattern that changed something for you?
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
-              Your story doesn't need to be dramatic. Small shifts matter — and someone else might be waiting to hear exactly yours.
-            </div>
+            {profile.commitment ? (
+              <>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--physical)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                  Your commitment
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)', marginBottom: 4, fontFamily: 'var(--font-display)', lineHeight: 1.3 }}>
+                  "{profile.commitment}"
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+                  When the pattern clicks, come back and share it. Your story might be what makes someone else commit.
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)', marginBottom: 4 }}>
+                  Have a pattern that changed something for you?
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+                  Your story doesn't need to be dramatic. Small shifts matter — and someone else might be waiting to hear exactly yours.
+                </div>
+              </>
+            )}
           </div>
           <button
             onClick={() => setShowModal(true)}
