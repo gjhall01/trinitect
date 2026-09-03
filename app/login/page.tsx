@@ -127,7 +127,7 @@ function LoginForm() {
 
           <div style={{ marginTop: 20, textAlign: 'center' }}>
             <button
-              onClick={() => router.push('/welcome')}
+              onClick={() => router.push('/start')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.06em' }}
             >
               New here? Create an account →
@@ -154,7 +154,7 @@ function LoginForm() {
               onClick={() => {
                 clearToken();
                 localStorage.clear();
-                fetch('/api/auth/logout', { method: 'POST' }).finally(() => router.replace('/'));
+                fetch('/api/auth/logout', { method: 'POST' }).finally(() => router.replace('/start'));
               }}
               style={{
                 background: 'none',

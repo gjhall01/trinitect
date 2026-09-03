@@ -134,7 +134,7 @@ export default function Welcome() {
 
       {/* Nav */}
       <nav className="lp-nav">
-        <Link href="/welcome" className="lp-logo">
+        <Link href="/" className="lp-logo">
           <div className="lp-logo-mark">T</div>
           <span className="lp-wordmark">Trinitect</span>
         </Link>
@@ -166,7 +166,7 @@ export default function Welcome() {
           Trinitect connects all three — because that's how they actually work.
         </p>
 
-        <Link href="/" className="hero-cta" data-reveal data-reveal-delay="3">
+        <Link href="/start" className="hero-cta" data-reveal data-reveal-delay="3">
           Begin your foundation →
         </Link>
 
@@ -381,7 +381,7 @@ export default function Welcome() {
           </h2>
           <p className="final-sub">Free to begin. No card required.</p>
           <div className="final-cta-links">
-            <Link href="/" className="hero-cta">
+            <Link href="/start" className="hero-cta">
               Start your foundation →
             </Link>
             <Link href="/login" className="final-cta-secondary">
