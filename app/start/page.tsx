@@ -181,7 +181,7 @@ export default function Onboarding() {
               style={{ marginBottom: 24 }}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
               <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                 When you drift — what pulls you back?
               </p>
@@ -193,6 +193,9 @@ export default function Onboarding() {
                 {selectedDrivers.length}/6
               </span>
             </div>
+            <p style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text4)', letterSpacing: '0.08em', marginBottom: 12 }}>
+              your anchors · not your gaps
+            </p>
 
             <div className="values-grid" style={{ marginBottom: 32 }}>
               {DRIVERS.map(({ name, desc }) => (
